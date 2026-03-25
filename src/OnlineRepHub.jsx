@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 // ═══════════════════════════════════════════════
 //  CONFIG — replace with your deployed URL
 // ═══════════════════════════════════════════════
-const APPS_SCRIPT_URL = "https://script.google.com/a/macros/trading212.com/s/AKfycbwvGlw183D9zU3oHZJBRtWFPRDX9XIde0ArQ3tft1fjaFEkKMt9L1jjkMevW9YRUYf8/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/a/macros/trading212.com/s/AKfycbwMWqCSgMgDLUZ5OTcBK2FtbamVkXi5hq7V8P41kta7_U4mHxmYey1JnyBJ_u-WmHSd/exec";
 
 // ═══════════════════════════════════════════════
 //  TEAM GUIDE SECTIONS
