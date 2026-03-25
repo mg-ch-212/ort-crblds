@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 
 // ═══════════════════════════════════════════════
-//  CONFIG — replace with your deployed URL
+//  CONFIG
 // ═══════════════════════════════════════════════
-const APPS_SCRIPT_URL = "https://script.google.com/a/macros/trading212.com/s/AKfycbwMWqCSgMgDLUZ5OTcBK2FtbamVkXi5hq7V8P41kta7_U4mHxmYey1JnyBJ_u-WmHSd/exec";
+const REPO_OWNER  = "mg-ch-212";
+const REPO_NAME   = "ort-crblds";
+const FILE_PATH   = "templates.json";
+const RAW_URL     = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
+const GITHUB_API  = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
 // ═══════════════════════════════════════════════
 //  TEAM GUIDE SECTIONS
@@ -74,102 +78,133 @@ const PLATFORM_COLORS = {
 };
 
 // ═══════════════════════════════════════════════
-//  APPS SCRIPT HELPERS
+//  GITHUB API HELPERS
 // ═══════════════════════════════════════════════
-async function fetchFromScript(params = {}) {
-  const query = new URLSearchParams(params).toString();
-  const url = query ? `${APPS_SCRIPT_URL}?${query}` : APPS_SCRIPT_URL;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function postToScript(body) {
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify(body)
-    // No Content-Type header — defaults to text/plain, avoids CORS preflight
+async function submitToGitHub(templateData, pat) {
+  // 1. Get current file + SHA
+  const fileRes = await fetch(GITHUB_API, {
+    headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json" }
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  if (!fileRes.ok) throw new Error(fileRes.status === 401 ? "Invalid GitHub token. Check your PAT in settings." : `GitHub API error: ${fileRes.status}`);
+  const fileData = await fileRes.json();
+  const sha = fileData.sha;
+  const current = JSON.parse(atob(fileData.content.replace(/\n/g, "")));
+
+  // 2. Generate next ID
+  const maxN = (current.templates || []).reduce((m, t) => {
+    return Math.max(m, parseInt((t.id || "T000").replace("T", "")) || 0);
+  }, 0);
+  const newId = "T" + String(maxN + 1).padStart(3, "0");
+
+  // 3. Build new template entry
+  const today = new Date().toLocaleDateString("en-GB");
+  const newTemplate = {
+    id: newId,
+    title: templateData.title,
+    category: templateData.category,
+    platforms: templateData.platforms,
+    text: templateData.text,
+    notes: templateData.notes || "",
+    author: templateData.author,
+    status: "draft",
+    dateAdded: today
+  };
+
+  current.templates = [...(current.templates || []), newTemplate];
+
+  // 4. Add new category to categories list if it doesn't exist
+  if (templateData.isNewCategory && templateData.category) {
+    const exists = (current.categories || []).some(c => c.name === templateData.category);
+    if (!exists) {
+      const maxOrder = (current.categories || []).reduce((m, c) => Math.max(m, c.order || 0), 0);
+      current.categories = [...(current.categories || []), {
+        name: templateData.category,
+        icon: "📌",
+        order: maxOrder + 1
+      }];
+    }
+  }
+
+  // 5. Commit to GitHub
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2))));
+  const updateRes = await fetch(GITHUB_API, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify({ message: `Add template: ${templateData.title}`, content: encoded, sha })
+  });
+  if (!updateRes.ok) {
+    const err = await updateRes.json();
+    throw new Error(err.message || "Failed to save to GitHub.");
+  }
+  return newId;
 }
 
 // ═══════════════════════════════════════════════
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════
 export default function SocialMediaHub() {
-  const [activeTab, setActiveTab]           = useState("templates");
-  const [search, setSearch]                 = useState("");
-  const [platformFilter, setPlatformFilter] = useState(null);
+  const [activeTab, setActiveTab]               = useState("templates");
+  const [search, setSearch]                     = useState("");
+  const [platformFilter, setPlatformFilter]     = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [openGuideSections, setOpenGuideSections] = useState({});
-  const [copiedId, setCopiedId]             = useState(null);
-  const [showAddModal, setShowAddModal]     = useState(false);
-  const [loading, setLoading]               = useState(true);
-  const [syncStatus, setSyncStatus]         = useState(null); // "syncing" | "synced" | "error"
-  const [fetchError, setFetchError]         = useState(null);
+  const [copiedId, setCopiedId]                 = useState(null);
+  const [showAddModal, setShowAddModal]         = useState(false);
+  const [showSettings, setShowSettings]         = useState(false);
+  const [loading, setLoading]                   = useState(true);
+  const [syncStatus, setSyncStatus]             = useState(null);
+  const [fetchError, setFetchError]             = useState(null);
+  const [ghPat, setGhPat]                       = useState(() => localStorage.getItem("ort_gh_pat") || "");
 
-  // Data from Google Sheet via Apps Script
-  const [sheetCategories, setSheetCategories] = useState([]);
-  const [allTemplates, setAllTemplates]       = useState([]);
+  const [categories, setCategories]   = useState([]);
+  const [allTemplates, setAllTemplates] = useState([]);
+
+  const savePat = (pat) => {
+    setGhPat(pat);
+    if (pat) localStorage.setItem("ort_gh_pat", pat);
+    else localStorage.removeItem("ort_gh_pat");
+  };
 
   const loadData = useCallback(async (showSync = false) => {
-    if (APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") {
-      setFetchError("Apps Script URL not configured. Open OnlineRepHub.jsx and replace the placeholder at the top.");
-      setLoading(false);
-      return;
-    }
     if (showSync) setSyncStatus("syncing");
     try {
-      const [tRes, cRes] = await Promise.all([
-        fetchFromScript(),                        // no params → returns templates
-        fetchFromScript({ action: "categories" }) // returns categories
-      ]);
-      if (tRes.success)  setAllTemplates(tRes.templates);
-      if (cRes.success)  setSheetCategories(cRes.categories);
+      const res = await fetch(`${RAW_URL}?t=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setAllTemplates((data.templates || []).filter(t => t.status === "approved"));
+      setCategories(data.categories || []);
       setFetchError(null);
-      if (showSync) {
-        setSyncStatus("synced");
-        setTimeout(() => setSyncStatus(null), 2000);
-      }
+      if (showSync) { setSyncStatus("synced"); setTimeout(() => setSyncStatus(null), 2000); }
     } catch (e) {
-      setFetchError("Couldn't reach the template library. Check your connection.");
-      if (showSync) setSyncStatus("error");
-      setTimeout(() => setSyncStatus(null), 3000);
+      setFetchError("Couldn't load templates. Check your connection.");
+      if (showSync) { setSyncStatus("error"); setTimeout(() => setSyncStatus(null), 3000); }
     }
   }, []);
 
-  useEffect(() => {
-    loadData(false).finally(() => setLoading(false));
-  }, [loadData]);
+  useEffect(() => { loadData(false).finally(() => setLoading(false)); }, [loadData]);
 
-  // ── Build category tree from flat template list ──
+  // ── Build category tree ──
   const mergedCategories = (() => {
-    const iconMap  = Object.fromEntries(sheetCategories.map(c => [c.name, c.icon]));
-    const orderMap = Object.fromEntries(sheetCategories.map(c => [c.name, c.order]));
+    const iconMap  = Object.fromEntries(categories.map(c => [c.name, c.icon]));
+    const orderMap = Object.fromEntries(categories.map(c => [c.name, c.order]));
     const catMap   = {};
     allTemplates.forEach(t => {
-      if (!catMap[t.category]) {
-        catMap[t.category] = { name: t.category, icon: iconMap[t.category] || "📌", replies: [] };
-      }
+      if (!catMap[t.category]) catMap[t.category] = { name: t.category, icon: iconMap[t.category] || "📌", replies: [] };
       catMap[t.category].replies.push({ ...t, builtIn: t.author === "Trading 212" });
     });
-    return Object.values(catMap).sort((a, b) =>
-      ((orderMap[a.name] ?? 999) - (orderMap[b.name] ?? 999))
-    );
+    return Object.values(catMap).sort((a, b) => ((orderMap[a.name] ?? 999) - (orderMap[b.name] ?? 999)));
   })();
 
-  // ── Filter ──
   const filtered = (() => {
     const q = search.toLowerCase().trim();
-    return mergedCategories.map(cat => {
-      const replies = cat.replies.filter(r => {
+    return mergedCategories.map(cat => ({
+      ...cat,
+      replies: cat.replies.filter(r => {
         const matchSearch   = !q || r.title.toLowerCase().includes(q) || r.text.toLowerCase().includes(q);
         const matchPlatform = !platformFilter || r.platforms.includes(platformFilter);
         return matchSearch && matchPlatform;
-      });
-      return { ...cat, replies };
-    }).filter(c => c.replies.length > 0);
+      })
+    })).filter(c => c.replies.length > 0);
   })();
 
   const usedPlatforms  = [...new Set(mergedCategories.flatMap(c => c.replies.flatMap(r => r.platforms)))];
@@ -178,28 +213,21 @@ export default function SocialMediaHub() {
   const filteredTotal  = filtered.reduce((s, c) => s + c.replies.length, 0);
 
   const handleCopy = async (rid, text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
       const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.cssText = "position:fixed;opacity:0;left:-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      ta.value = text; ta.style.cssText = "position:fixed;opacity:0;left:-9999px";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
     }
     setCopiedId(rid);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  if (loading) {
-    return (
-      <div style={{ fontFamily: "'Poppins', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "#8B949E" }}>
-        Loading…
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ fontFamily: "'Poppins', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "#8B949E" }}>
+      Loading…
+    </div>
+  );
 
   return (
     <div style={{ fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, sans-serif", background: "#F4F4F2", minHeight: "100vh", WebkitFontSmoothing: "antialiased" }}>
@@ -209,21 +237,21 @@ export default function SocialMediaHub() {
         <div style={{ background: "linear-gradient(135deg, #0D1117 0%, #161B22 40%, #1C2333 100%)", borderRadius: "16px 16px 0 0", padding: "28px 32px 20px", color: "#E6EDF3", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -60, right: -60, width: 240, height: 240, background: "radial-gradient(circle, rgba(0,182,122,0.07) 0%, transparent 70%)", borderRadius: "50%" }} />
           <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-              <div style={{ width: 38, height: 38, background: "rgba(0,182,122,0.12)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📋</div>
-              <div>
-                <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.3, color: "#FFF", margin: 0 }}>Online Reputation Hub</h1>
-                <div style={{ fontSize: 13, color: "#8B949E", marginTop: 2 }}>Trading 212 · Templates & Team Guide</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 38, height: 38, background: "rgba(0,182,122,0.12)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📋</div>
+                <div>
+                  <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.3, color: "#FFF", margin: 0 }}>Online Reputation Hub</h1>
+                  <div style={{ fontSize: 13, color: "#8B949E", marginTop: 2 }}>Trading 212 · Templates & Team Guide</div>
+                </div>
               </div>
+              <button onClick={() => setShowSettings(true)} title="GitHub token settings" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 10px", cursor: "pointer", fontSize: 16, color: ghPat ? "#00B67A" : "#8B949E" }}>
+                🔑
+              </button>
             </div>
             {activeTab === "templates" && (
               <div style={{ display: "flex", gap: 16, marginTop: 18, flexWrap: "wrap" }}>
-                {[
-                  [mergedCategories.length, "Categories"],
-                  [totalReplies,            "Replies"],
-                  [usedPlatforms.length,    "Platforms"],
-                  [teamAddedCount,          "Team-Added"]
-                ].map(([val, label]) => (
+                {[[mergedCategories.length,"Categories"],[totalReplies,"Replies"],[usedPlatforms.length,"Platforms"],[teamAddedCount,"Team-Added"]].map(([val,label]) => (
                   <div key={label} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 16px" }}>
                     <div style={{ fontSize: 20, fontWeight: 700, color: "#58A6FF" }}>{val}</div>
                     <div style={{ fontSize: 11, color: "#8B949E" }}>{label}</div>
@@ -236,17 +264,13 @@ export default function SocialMediaHub() {
 
         {/* ── Tab bar ── */}
         <div style={{ display: "flex", background: "#161B22", borderRadius: "0 0 16px 16px", padding: "0 24px", marginBottom: 20, gap: 4, overflowX: "auto" }}>
-          {[
-            { id: "templates", icon: "💬", label: "Response Templates" },
-            { id: "guide",     icon: "📘", label: "Team Guide" }
-          ].map(t => (
+          {[{ id: "templates", icon: "💬", label: "Response Templates" }, { id: "guide", icon: "📘", label: "Team Guide" }].map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
               padding: "12px 20px", fontSize: 13, fontWeight: 500, cursor: "pointer",
               border: "none", background: "none", fontFamily: "inherit",
               borderBottom: `2px solid ${activeTab === t.id ? "#00B67A" : "transparent"}`,
               color: activeTab === t.id ? "#FFF" : "#8B949E",
-              transition: "all 0.15s", whiteSpace: "nowrap",
-              display: "flex", alignItems: "center", gap: 7
+              transition: "all 0.15s", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 7
             }}>
               <span style={{ fontSize: 14 }}>{t.icon}</span> {t.label}
             </button>
@@ -258,7 +282,6 @@ export default function SocialMediaHub() {
         {/* ══════════════════════════════════════ */}
         {activeTab === "templates" && (
           <>
-            {/* Error banner */}
             {fetchError && (
               <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "12px 16px", marginBottom: 14, fontSize: 13, color: "#DC2626" }}>
                 ⚠️ {fetchError}
@@ -268,31 +291,20 @@ export default function SocialMediaHub() {
             {/* Toolbar */}
             <div style={{ background: "#FFF", borderRadius: 12, padding: "16px 20px", marginBottom: 16, border: "1px solid #E1E4E8" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                <input
-                  type="text"
-                  placeholder="Search replies by keyword..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  style={{ flex: 1, border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 14px", fontSize: 14, fontFamily: "inherit", outline: "none", background: "#F6F8FA" }}
-                />
-                <button
-                  onClick={() => loadData(true)}
-                  title="Refresh templates from sheet"
-                  style={{
-                    background: syncStatus === "synced" ? "#DCFCE7" : syncStatus === "error" ? "#FEF2F2" : "#F6F8FA",
-                    color:      syncStatus === "synced" ? "#166534" : syncStatus === "error" ? "#DC2626" : "#57606A",
-                    border: `1px solid ${syncStatus === "synced" ? "#BBF7D0" : syncStatus === "error" ? "#FECACA" : "#D0D7DE"}`,
-                    borderRadius: 8, padding: "10px 14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit",
-                    whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s"
-                  }}
-                >
+                <input type="text" placeholder="Search replies by keyword..." value={search} onChange={e => setSearch(e.target.value)}
+                  style={{ flex: 1, border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 14px", fontSize: 14, fontFamily: "inherit", outline: "none", background: "#F6F8FA" }} />
+                <button onClick={() => loadData(true)} title="Refresh templates" style={{
+                  background: syncStatus === "synced" ? "#DCFCE7" : syncStatus === "error" ? "#FEF2F2" : "#F6F8FA",
+                  color:      syncStatus === "synced" ? "#166534" : syncStatus === "error" ? "#DC2626" : "#57606A",
+                  border: `1px solid ${syncStatus === "synced" ? "#BBF7D0" : syncStatus === "error" ? "#FECACA" : "#D0D7DE"}`,
+                  borderRadius: 8, padding: "10px 14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                  whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s"
+                }}>
                   {syncStatus === "syncing" ? "⟳" : syncStatus === "synced" ? "✓" : syncStatus === "error" ? "✕" : "⟳"}{" "}
                   {syncStatus === "syncing" ? "Syncing…" : syncStatus === "synced" ? "Synced" : syncStatus === "error" ? "Failed" : "Sync"}
                 </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}
-                >
+                <button onClick={() => { if (!ghPat) { setShowSettings(true); } else { setShowAddModal(true); } }}
+                  style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
                   + Add Template
                 </button>
               </div>
@@ -300,8 +312,7 @@ export default function SocialMediaHub() {
                 <button onClick={() => setPlatformFilter(null)} style={{
                   fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
                   border: `1px solid ${!platformFilter ? "#0D1117" : "#D0D7DE"}`,
-                  background: !platformFilter ? "#0D1117" : "#FFF",
-                  color: !platformFilter ? "#FFF" : "#57606A"
+                  background: !platformFilter ? "#0D1117" : "#FFF", color: !platformFilter ? "#FFF" : "#57606A"
                 }}>All</button>
                 {usedPlatforms.map(p => (
                   <button key={p} onClick={() => setPlatformFilter(platformFilter === p ? null : p)} style={{
@@ -343,7 +354,7 @@ export default function SocialMediaHub() {
                   {isOpen && (
                     <div style={{ padding: "0 18px 14px" }}>
                       {cat.replies.map((r, ri) => {
-                        const rid     = `${cat.name}-${ri}`;
+                        const rid = `${cat.name}-${ri}`;
                         const isCopied = copiedId === rid;
                         const isTeamAdded = !r.builtIn;
                         return (
@@ -437,19 +448,76 @@ export default function SocialMediaHub() {
       </div>
 
       {/* ══════════════════════════════════════ */}
+      {/*  SETTINGS MODAL (PAT)                 */}
+      {/* ══════════════════════════════════════ */}
+      {showSettings && (
+        <PATSettingsModal
+          currentPat={ghPat}
+          onSave={(pat) => { savePat(pat); setShowSettings(false); }}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════ */}
       {/*  ADD TEMPLATE MODAL                   */}
       {/* ══════════════════════════════════════ */}
       {showAddModal && (
         <AddTemplateModal
-          categories={sheetCategories.map(c => c.name)}
+          categories={categories.map(c => c.name)}
           onSave={async (template) => {
-            const data = await postToScript({ action: "add", ...template });
-            if (!data.success) throw new Error("Sheet rejected the submission.");
+            await submitToGitHub(template, ghPat);
             setShowAddModal(false);
           }}
           onClose={() => setShowAddModal(false)}
         />
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  PAT SETTINGS MODAL
+// ═══════════════════════════════════════════════
+function PATSettingsModal({ currentPat, onSave, onClose }) {
+  const [pat, setPat] = useState(currentPat);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 460, padding: 0 }}>
+        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E1E4E8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328" }}>🔑 GitHub Token</div>
+            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Required to submit new templates. Stored locally in your browser only.</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8B949E", padding: 4 }}>✕</button>
+        </div>
+        <div style={{ padding: "20px 24px" }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#1F2328", marginBottom: 6, display: "block" }}>
+            Personal Access Token (classic)
+          </label>
+          <input
+            type="password"
+            value={pat}
+            onChange={e => setPat(e.target.value)}
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+            style={{ width: "100%", border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "#F6F8FA", boxSizing: "border-box", marginBottom: 12 }}
+          />
+          <div style={{ fontSize: 12, color: "#57606A", background: "#F6F8FA", borderRadius: 8, padding: "10px 12px", marginBottom: 20, lineHeight: 1.6 }}>
+            Generate at <strong>github.com/settings/tokens</strong> → Classic token → tick <strong>repo</strong> scope. The token never leaves your browser.
+          </div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            {currentPat && (
+              <button onClick={() => onSave("")} style={{ background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                Remove token
+              </button>
+            )}
+            <button onClick={() => onSave(pat.trim())} disabled={!pat.trim()} style={{
+              background: pat.trim() ? "#00B67A" : "#E5E7EB", color: pat.trim() ? "#FFF" : "#9CA3AF",
+              border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: pat.trim() ? "pointer" : "default", fontFamily: "inherit"
+            }}>Save token</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -470,28 +538,27 @@ function AddTemplateModal({ categories, onSave, onClose }) {
   const [saveError,      setSaveError]      = useState(null);
   const [saved,          setSaved]          = useState(false);
 
-  const togglePlatform = (p) =>
-    setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  const togglePlatform = p => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
   const canSave = title.trim() && text.trim() && author.trim() && platforms.length > 0 &&
     (useCustomCat ? customCategory.trim() : category);
 
   const handleSave = async () => {
     if (!canSave || saving) return;
-    setSaving(true);
-    setSaveError(null);
+    setSaving(true); setSaveError(null);
     try {
       await onSave({
-        title:     title.trim(),
-        category:  useCustomCat ? customCategory.trim() : category,
-        text:      text.trim(),
-        notes:     notes.trim(),
-        author:    author.trim(),
-        platforms: platforms.join(", ")
+        title:          title.trim(),
+        category:       useCustomCat ? customCategory.trim() : category,
+        text:           text.trim(),
+        notes:          notes.trim(),
+        author:         author.trim(),
+        platforms,
+        isNewCategory:  useCustomCat
       });
       setSaved(true);
     } catch (e) {
-      setSaveError("Couldn't save the template. Please try again.");
+      setSaveError(e.message || "Couldn't save the template. Please try again.");
       setSaving(false);
     }
   };
@@ -499,124 +566,106 @@ function AddTemplateModal({ categories, onSave, onClose }) {
   const inputStyle = { width: "100%", border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", background: "#F6F8FA", boxSizing: "border-box" };
   const labelStyle = { fontSize: 12, fontWeight: 600, color: "#1F2328", marginBottom: 6, display: "block" };
 
-  if (saved) {
-    return (
-      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
-        <div style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 400, padding: "40px 32px", textAlign: "center" }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328", marginBottom: 8 }}>Template submitted!</div>
-          <div style={{ fontSize: 13, color: "#57606A", lineHeight: 1.6, marginBottom: 24 }}>
-            It's been added to the sheet as a <strong>Draft</strong> and will appear here once approved.
-          </div>
-          <button onClick={onClose} style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 28px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-            Close
-          </button>
+  if (saved) return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
+      <div style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 400, padding: "40px 32px", textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328", marginBottom: 8 }}>Template submitted!</div>
+        <div style={{ fontSize: 13, color: "#57606A", lineHeight: 1.6, marginBottom: 24 }}>
+          Added to the repo as a <strong>Draft</strong>. It will appear here once approved in GitHub.
         </div>
+        <button onClick={onClose} style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 28px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          Close
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto", padding: 0 }}>
-
-        {/* Modal header */}
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E1E4E8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328" }}>Add Response Template</div>
-            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Submitted as Draft — visible to the team once approved</div>
+            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Submitted as Draft — visible once approved in GitHub</div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8B949E", padding: 4 }}>✕</button>
         </div>
+        <div style={{ padding: "20px 24px" }}>
+          {saveError && (
+            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", marginBottom: 16, fontSize: 12, color: "#DC2626" }}>
+              ⚠️ {saveError}
+            </div>
+          )}
 
-        {/* Form */}
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Title */}
-          <div>
-            <label style={labelStyle}>Reply Title *</label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g. "Withdrawal delay — processing time"' style={inputStyle} />
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Title *</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. 4-star — asking for more detail" style={inputStyle} />
           </div>
 
-          {/* Author */}
-          <div>
-            <label style={labelStyle}>Your Name *</label>
-            <input type="text" value={author} onChange={e => setAuthor(e.target.value)} placeholder="e.g. Alex" style={inputStyle} />
-          </div>
-
-          {/* Category */}
-          <div>
+          <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Category *</label>
             {!useCustomCat ? (
               <div style={{ display: "flex", gap: 8 }}>
-                <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, flex: 1, cursor: "pointer" }}>
+                <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <button onClick={() => setUseCustomCat(true)} style={{ background: "none", border: "1px solid #D0D7DE", borderRadius: 8, padding: "8px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", color: "#57606A", whiteSpace: "nowrap" }}>+ New</button>
+                <button onClick={() => setUseCustomCat(true)} style={{ background: "#F6F8FA", border: "1px solid #D0D7DE", borderRadius: 8, padding: "0 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", color: "#57606A" }}>
+                  + New
+                </button>
               </div>
             ) : (
               <div style={{ display: "flex", gap: 8 }}>
-                <input type="text" value={customCategory} onChange={e => setCustomCategory(e.target.value)} placeholder="New category name" style={{ ...inputStyle, flex: 1 }} />
-                <button onClick={() => setUseCustomCat(false)} style={{ background: "none", border: "1px solid #D0D7DE", borderRadius: 8, padding: "8px 12px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", color: "#57606A" }}>Cancel</button>
+                <input value={customCategory} onChange={e => setCustomCategory(e.target.value)} placeholder="New category name" style={{ ...inputStyle, flex: 1 }} />
+                <button onClick={() => { setUseCustomCat(false); setCustomCategory(""); }} style={{ background: "#F6F8FA", border: "1px solid #D0D7DE", borderRadius: 8, padding: "0 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", color: "#57606A" }}>
+                  Cancel
+                </button>
               </div>
             )}
           </div>
 
-          {/* Reply text */}
-          <div>
-            <label style={labelStyle}>Reply Text *</label>
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Paste or type the full reply text here..." rows={6} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label style={labelStyle}>Notes <span style={{ fontWeight: 400, color: "#8B949E" }}>(optional)</span></label>
-            <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder='e.g. "Adjust country name as needed"' style={inputStyle} />
-          </div>
-
-          {/* Platforms */}
-          <div>
-            <label style={labelStyle}>Platforms * <span style={{ fontWeight: 400, color: "#8B949E" }}>(select all that apply)</span></label>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Platforms * <span style={{ fontWeight: 400, color: "#8B949E" }}>— select all that apply</span></label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {ALL_PLATFORMS.map(p => {
-                const isSelected = platforms.includes(p);
-                return (
-                  <button key={p} onClick={() => togglePlatform(p)} style={{
-                    fontSize: 11, padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
-                    border: `1px solid ${isSelected ? (PLATFORM_COLORS[p] || "#888") : "#D0D7DE"}`,
-                    background: isSelected ? `${PLATFORM_COLORS[p] || "#888"}14` : "#FFF",
-                    color: isSelected ? (PLATFORM_COLORS[p] || "#888") : "#57606A",
-                    transition: "all 0.12s"
-                  }}>{p}</button>
-                );
-              })}
+              {ALL_PLATFORMS.map(p => (
+                <button key={p} onClick={() => togglePlatform(p)} style={{
+                  fontSize: 11, padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
+                  border: `1px solid ${platforms.includes(p) ? (PLATFORM_COLORS[p] || "#888") : "#D0D7DE"}`,
+                  background: platforms.includes(p) ? `${PLATFORM_COLORS[p] || "#888"}14` : "#FFF",
+                  color: platforms.includes(p) ? (PLATFORM_COLORS[p] || "#888") : "#57606A"
+                }}>{p}</button>
+              ))}
             </div>
           </div>
 
-          {/* Error */}
-          {saveError && (
-            <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#DC2626" }}>
-              {saveError}
-            </div>
-          )}
-        </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Reply Text *</label>
+            <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder="Write the full reply here..." style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+          </div>
 
-        {/* Modal footer */}
-        <div style={{ padding: "16px 24px 20px", borderTop: "1px solid #E1E4E8", display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button onClick={onClose} style={{ background: "#FFF", color: "#57606A", border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>Cancel</button>
-          <button
-            onClick={handleSave}
-            disabled={!canSave || saving}
-            style={{
-              background: canSave && !saving ? "#00B67A" : "#D0D7DE",
-              color: canSave && !saving ? "#FFF" : "#8B949E",
-              border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 13,
-              cursor: canSave && !saving ? "pointer" : "default",
-              fontFamily: "inherit", fontWeight: 600, transition: "all 0.15s"
-            }}
-          >
-            {saving ? "Submitting…" : "Submit Template"}
-          </button>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Notes <span style={{ fontWeight: 400, color: "#8B949E" }}>— optional usage tips</span></label>
+            <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. Replace {name} with the reviewer's name" style={inputStyle} />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={labelStyle}>Your name *</label>
+            <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="e.g. Alex" style={inputStyle} />
+          </div>
+
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button onClick={onClose} style={{ background: "#F6F8FA", color: "#57606A", border: "1px solid #D0D7DE", borderRadius: 8, padding: "9px 20px", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+              Cancel
+            </button>
+            <button onClick={handleSave} disabled={!canSave || saving} style={{
+              background: canSave && !saving ? "#00B67A" : "#E5E7EB",
+              color: canSave && !saving ? "#FFF" : "#9CA3AF",
+              border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600,
+              cursor: canSave && !saving ? "pointer" : "default", fontFamily: "inherit"
+            }}>
+              {saving ? "Saving…" : "Submit Template"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
