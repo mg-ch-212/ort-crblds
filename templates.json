@@ -1530,6 +1530,19 @@
       "author": "Momchil Georgiev",
       "status": "approved",
       "dateAdded": "26/03/2026"
+    },
+    {
+      "id": "T095",
+      "title": "Test",
+      "category": "Complaints & Negative Reviews",
+      "platforms": [
+        "Trustpilot"
+      ],
+      "text": "Test",
+      "notes": "",
+      "author": "Bogomil Hadzhiyski",
+      "status": "draft",
+      "dateAdded": "26/03/2026"
     }
   ]
 }
