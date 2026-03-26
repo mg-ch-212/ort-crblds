@@ -2,69 +2,69 @@
   "categories": [
     {
       "name": "Complaints & Negative Reviews",
-      "icon": "â ï¸",
+      "icon": "\u26a0\ufe0f",
       "order": 1
     },
     {
       "name": "App & Technical Issues",
-      "icon": "ð±",
+      "icon": "\ud83d\udcf1",
       "order": 2
     },
     {
       "name": "Security & Regulation",
-      "icon": "ð",
+      "icon": "\ud83d\udd12",
       "order": 3
     },
     {
       "name": "Account & Registration",
-      "icon": "ð¤",
+      "icon": "\ud83d\udc64",
       "order": 4
     },
     {
       "name": "Deposits & Withdrawals",
-      "icon": "ð³",
+      "icon": "\ud83d\udcb3",
       "order": 5
     },
     {
       "name": "Trading & Orders",
-      "icon": "ð",
+      "icon": "\ud83d\udcc8",
       "order": 6
     },
     {
       "name": "T212 Card",
-      "icon": "ð³",
+      "icon": "\ud83d\udcb3",
       "order": 7
     },
     {
       "name": "Fees & Charges",
-      "icon": "ð°",
+      "icon": "\ud83d\udcb0",
       "order": 8
     },
     {
       "name": "Interest & Cash",
-      "icon": "ð¦",
+      "icon": "\ud83c\udfe6",
       "order": 9
     },
     {
       "name": "Pies & AutoInvest",
-      "icon": "ð¥§",
+      "icon": "\ud83e\udd67",
       "order": 10
     },
     {
       "name": "Stocks & Market General",
-      "icon": "ð",
+      "icon": "\ud83d\udcca",
       "order": 11
     },
     {
       "name": "Positive Reviews",
-      "icon": "â­",
+      "icon": "\u2b50",
       "order": 12
     }
   ],
   "templates": [
     {
       "id": "T001",
-      "title": "1-star review â asking for more info",
+      "title": "1-star review \u2014 asking for more info",
       "category": "Complaints & Negative Reviews",
       "platforms": [
         "Trustpilot",
@@ -80,7 +80,7 @@
     },
     {
       "id": "T002",
-      "title": "1-star review â customer service",
+      "title": "1-star review \u2014 customer service",
       "category": "Complaints & Negative Reviews",
       "platforms": [
         "Trustpilot",
@@ -152,7 +152,7 @@
         "App Store",
         "Reddit"
       ],
-      "text": "We regret to see your 1-star review.\n\nAs outlined in the official terms of the Invite-a-Friend campaign and all promotional materials, each client receives a randomly assigned free share, with the value ranging from 8 GBP to 100 GBP. You can find details on share value probability and other information in the Invite-a-Friend dashboard (Menu â Get free shares). We understand your frustration and we'll look for ways to improve our promotional materials. In the meantime, if we can do something to improve your experience, please share it with us by updating your review.",
+      "text": "We regret to see your 1-star review.\n\nAs outlined in the official terms of the Invite-a-Friend campaign and all promotional materials, each client receives a randomly assigned free share, with the value ranging from 8 GBP to 100 GBP. You can find details on share value probability and other information in the Invite-a-Friend dashboard (Menu \u2192 Get free shares). We understand your frustration and we'll look for ways to improve our promotional materials. In the meantime, if we can do something to improve your experience, please share it with us by updating your review.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -183,7 +183,7 @@
         "Google Play",
         "App Store"
       ],
-      "text": "We're sorry to hear this has been inconvenient.\n\nThe six-digit passcode was introduced to strengthen account security. We don't set the passcode â each client chooses their own combination.\n\nIf you have Face ID or Touch ID enabled, you can use it for quicker access. You can also adjust how often the passcode is required via Menu â Privacy & security â Passcode lock.\n\nIf you have additional feedback or need help logging in, please contact us via t212.cc/ask, and once submitted, share your case reference number.",
+      "text": "We're sorry to hear this has been inconvenient.\n\nThe six-digit passcode was introduced to strengthen account security. We don't set the passcode \u2014 each client chooses their own combination.\n\nIf you have Face ID or Touch ID enabled, you can use it for quicker access. You can also adjust how often the passcode is required via Menu \u2192 Privacy & security \u2192 Passcode lock.\n\nIf you have additional feedback or need help logging in, please contact us via t212.cc/ask, and once submitted, share your case reference number.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -223,7 +223,7 @@
     },
     {
       "id": "T011",
-      "title": "4-star review â can't log out",
+      "title": "4-star review \u2014 can't log out",
       "category": "App & Technical Issues",
       "platforms": [
         "Trustpilot",
@@ -238,7 +238,7 @@
     },
     {
       "id": "T012",
-      "title": "4-star review â something's missing",
+      "title": "4-star review \u2014 something's missing",
       "category": "App & Technical Issues",
       "platforms": [
         "Trustpilot",
@@ -259,15 +259,15 @@
         "Trustpilot",
         "Google Maps"
       ],
-      "text": "We regret to hear about your disappointment.\n\nWe understand that an extra step can feel inconvenient, but the six-digit passcode was introduced to strengthen the security of all our clients' accounts. We don't determine what the passcode should be â each client is free to choose their own combination. If you have Face ID or Touch ID enabled, you can use it for quicker access. You can also adjust how often the passcode is required based on your preferences by going to Menu â Privacy & security â Passcode lock.\n\nIf you have any additional feedback or need help logging in, please contact us via the t212.cc/ask form and share the reference number once done. We'd love the opportunity to help and improve your experience.",
-      "notes": "Longer version â more empathetic tone with reference number request",
+      "text": "We regret to hear about your disappointment.\n\nWe understand that an extra step can feel inconvenient, but the six-digit passcode was introduced to strengthen the security of all our clients' accounts. We don't determine what the passcode should be \u2014 each client is free to choose their own combination. If you have Face ID or Touch ID enabled, you can use it for quicker access. You can also adjust how often the passcode is required based on your preferences by going to Menu \u2192 Privacy & security \u2192 Passcode lock.\n\nIf you have any additional feedback or need help logging in, please contact us via the t212.cc/ask form and share the reference number once done. We'd love the opportunity to help and improve your experience.",
+      "notes": "Longer version \u2014 more empathetic tone with reference number request",
       "author": "Trading 212",
       "status": "approved",
       "dateAdded": "16/03/2025"
     },
     {
       "id": "T014",
-      "title": "App update â don't like it",
+      "title": "App update \u2014 don't like it",
       "category": "App & Technical Issues",
       "platforms": [
         "Trustpilot",
@@ -291,14 +291,14 @@
         "App Store"
       ],
       "text": "We regret to hear that you're having difficulties with the app. If you're using the latest app version and reinstalling it doesn't resolve this, please send us an email to info@trading212.com. That way, we can take a closer look at what may be causing the app to crash on your end and assist you with creating a Cash ISA. Alternatively, you can try signing up on a personal computer.",
-      "notes": "Specifically mentions Cash ISA signup issue â adjust last sentence if the context is different",
+      "notes": "Specifically mentions Cash ISA signup issue \u2014 adjust last sentence if the context is different",
       "author": "Trading 212",
       "status": "approved",
       "dateAdded": "16/03/2025"
     },
     {
       "id": "T016",
-      "title": "Charts â discrepancy",
+      "title": "Charts \u2014 discrepancy",
       "category": "App & Technical Issues",
       "platforms": [
         "Trustpilot",
@@ -321,7 +321,7 @@
         "Google Play",
         "App Store"
       ],
-      "text": "We're sorry the platform hasn't felt intuitive for you.\n\nWe'd really appreciate understanding what felt most confusing â whether it's navigation, finding specific features, or something else entirely. Please update your review with a couple of examples so we can better understand and improve the experience.\n\nIf you need any guidance in the meantime, feel free to reach out via the in-app chat or at info@trading212.com.",
+      "text": "We're sorry the platform hasn't felt intuitive for you.\n\nWe'd really appreciate understanding what felt most confusing \u2014 whether it's navigation, finding specific features, or something else entirely. Please update your review with a couple of examples so we can better understand and improve the experience.\n\nIf you need any guidance in the meantime, feel free to reach out via the in-app chat or at info@trading212.com.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -352,7 +352,7 @@
         "App Store",
         "Reddit"
       ],
-      "text": "There's an important difference between a standard login and marking a browser as a \"trusted device\". A standard login uses your password plus a verification code (2FA), while \"trusting\" a device is a convenience option that reduces how often 2FA is requested on that browser. Because trusted status removes an extra security step for future logins, we need to be sure it's really you approving it, which is why a selfie/video check may be required.\n\nIf your PC doesn't have a webcam (or it's disabled), you can still use the platform via the standard login flow â you'll just be asked for 2FA more often. If you'd like, contact us via the in-app chat or at info@trading212.com and we'll guide you through the available options.",
+      "text": "There's an important difference between a standard login and marking a browser as a \"trusted device\". A standard login uses your password plus a verification code (2FA), while \"trusting\" a device is a convenience option that reduces how often 2FA is requested on that browser. Because trusted status removes an extra security step for future logins, we need to be sure it's really you approving it, which is why a selfie/video check may be required.\n\nIf your PC doesn't have a webcam (or it's disabled), you can still use the platform via the standard login flow \u2014 you'll just be asked for 2FA more often. If you'd like, contact us via the in-app chat or at info@trading212.com and we'll guide you through the available options.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -393,7 +393,7 @@
     },
     {
       "id": "T022",
-      "title": "Verification â why it's needed",
+      "title": "Verification \u2014 why it's needed",
       "category": "Security & Regulation",
       "platforms": [
         "Trustpilot",
@@ -436,7 +436,7 @@
         "X",
         "Facebook"
       ],
-      "text": "You can withdraw your funds at any time. However, if not all payment methods have been verified, withdrawal limits may apply depending on your deposits.\n\nPayment method verification is required under anti-money laundering regulations. If you've added multiple payment methods, all of them must be verified. Even if a method is no longer active, we can't remove it â only verify it.\n\nIf you need help with verification, please message us and we'll assist.",
+      "text": "You can withdraw your funds at any time. However, if not all payment methods have been verified, withdrawal limits may apply depending on your deposits.\n\nPayment method verification is required under anti-money laundering regulations. If you've added multiple payment methods, all of them must be verified. Even if a method is no longer active, we can't remove it \u2014 only verify it.\n\nIf you need help with verification, please message us and we'll assist.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -478,7 +478,7 @@
     },
     {
       "id": "T027",
-      "title": "Vulnerable client â trading break(s)",
+      "title": "Vulnerable client \u2014 trading break(s)",
       "category": "Security & Regulation",
       "platforms": [
         "Trustpilot",
@@ -511,7 +511,7 @@
     },
     {
       "id": "T029",
-      "title": "2FA â now mandatory",
+      "title": "2FA \u2014 now mandatory",
       "category": "Security & Regulation",
       "platforms": [
         "Trustpilot",
@@ -551,7 +551,7 @@
         "App Store"
       ],
       "text": "We're sorry to see your 1-star review. At the moment, we don't offer our services in Canada, but we're continuously exploring opportunities to expand. If we're able to onboard clients there in the future, we'll make an official announcement.",
-      "notes": "Adjust country name as needed (e.g. Canada â relevant country)",
+      "notes": "Adjust country name as needed (e.g. Canada \u2192 relevant country)",
       "author": "Trading 212",
       "status": "approved",
       "dateAdded": "16/03/2025"
@@ -568,7 +568,7 @@
         "X",
         "Facebook"
       ],
-      "text": "Thank you for your feedback, and we're sorry to hear about your disappointment.\n\nWe value all of our clients â new and long-standing. Promotions for new clients are common across many industries, but they're never meant to overlook the loyalty of existing clients.\n\nWe appreciate your input and will continue looking for ways to provide ongoing value. If there's something specific we can do to improve your experience, please share it by updating your review.",
+      "text": "Thank you for your feedback, and we're sorry to hear about your disappointment.\n\nWe value all of our clients \u2014 new and long-standing. Promotions for new clients are common across many industries, but they're never meant to overlook the loyalty of existing clients.\n\nWe appreciate your input and will continue looking for ways to provide ongoing value. If there's something specific we can do to improve your experience, please share it by updating your review.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -634,7 +634,7 @@
         "App Store",
         "Reddit"
       ],
-      "text": "Our Invest account is multi-currency. If the primary currency in your account is GBP and you wish to deposit USD, that's possible. You can choose to deposit in USD when you make it. Additionally, you can adjust the currency for your orders according to your preferences in 'Menu' â 'Settings' â 'Currency options'.",
+      "text": "Our Invest account is multi-currency. If the primary currency in your account is GBP and you wish to deposit USD, that's possible. You can choose to deposit in USD when you make it. Additionally, you can adjust the currency for your orders according to your preferences in 'Menu' \u2192 'Settings' \u2192 'Currency options'.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -642,7 +642,7 @@
     },
     {
       "id": "T037",
-      "title": "Instant bank transfer â bank not supported",
+      "title": "Instant bank transfer \u2014 bank not supported",
       "category": "Deposits & Withdrawals",
       "platforms": [
         "Trustpilot",
@@ -650,8 +650,8 @@
         "App Store",
         "Reddit"
       ],
-      "text": "Instant bank transfers are facilitated via TrueLayer, a third-party provider. The list of supported banks is determined by TrueLayer's cooperation with each bank, so it can't be modified by Trading 212.\n\nEven if Co-operative Bank isn't currently supported for instant transfers, you can still deposit via a regular bank transfer (typically 2â3 business days). Our bank details are available in the app via Deposit funds â Bank transfer. You can then complete the transfer directly from your banking app.\n\nIf you're having difficulties depositing funds, please let us know by updating your review. We're here to help.",
-      "notes": "Adjust bank name as needed (e.g. Co-operative Bank â relevant bank)",
+      "text": "Instant bank transfers are facilitated via TrueLayer, a third-party provider. The list of supported banks is determined by TrueLayer's cooperation with each bank, so it can't be modified by Trading 212.\n\nEven if Co-operative Bank isn't currently supported for instant transfers, you can still deposit via a regular bank transfer (typically 2\u20133 business days). Our bank details are available in the app via Deposit funds \u2192 Bank transfer. You can then complete the transfer directly from your banking app.\n\nIf you're having difficulties depositing funds, please let us know by updating your review. We're here to help.",
+      "notes": "Adjust bank name as needed (e.g. Co-operative Bank \u2192 relevant bank)",
       "author": "Trading 212",
       "status": "approved",
       "dateAdded": "16/03/2025"
@@ -701,7 +701,7 @@
         "Reddit",
         "X"
       ],
-      "text": "We don't restrict an instrument without a valid reason â e.g., bankruptcy, compliance restrictions, exchange-initiated suspensions, pending delisting, or regulatory investigations.\n\nFor transparency, whenever an instrument is restricted, a trading notice will be displayed.",
+      "text": "We don't restrict an instrument without a valid reason \u2014 e.g., bankruptcy, compliance restrictions, exchange-initiated suspensions, pending delisting, or regulatory investigations.\n\nFor transparency, whenever an instrument is restricted, a trading notice will be displayed.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -718,7 +718,7 @@
         "Reddit",
         "Discourse Forum"
       ],
-      "text": "We understand these limits can be frustrating, and it's never our intention to make things difficult.\n\nMaximum order and position size limits are determined by our risk management framework and current market conditions. They help protect both clients and the platform from unnecessary risk â especially when trading highly volatile or less liquid instruments. That's why limits can be higher for very liquid stocks (e.g., Apple, Nvidia, Tesla) and lower for low-liquidity instruments.\n\nWe continuously reassess these limits and factor client feedback into future adjustments.",
+      "text": "We understand these limits can be frustrating, and it's never our intention to make things difficult.\n\nMaximum order and position size limits are determined by our risk management framework and current market conditions. They help protect both clients and the platform from unnecessary risk \u2014 especially when trading highly volatile or less liquid instruments. That's why limits can be higher for very liquid stocks (e.g., Apple, Nvidia, Tesla) and lower for low-liquidity instruments.\n\nWe continuously reassess these limits and factor client feedback into future adjustments.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -736,7 +736,7 @@
         "X",
         "Facebook"
       ],
-      "text": "We're sorry to hear you feel this way.\n\nAs an FCA-regulated broker, we're committed to transparency and compliance. Prices on our platform come from our liquidity providers and reflect real-time market data. While charts are for indicative purposes, we do not manipulate prices.\n\nSmall differences across platforms can happen due to differences in data sources or update timing. If you have concerns about a specific instrument or trade, please contact us via t212.cc/ask â we'll be happy to review it.",
+      "text": "We're sorry to hear you feel this way.\n\nAs an FCA-regulated broker, we're committed to transparency and compliance. Prices on our platform come from our liquidity providers and reflect real-time market data. While charts are for indicative purposes, we do not manipulate prices.\n\nSmall differences across platforms can happen due to differences in data sources or update timing. If you have concerns about a specific instrument or trade, please contact us via t212.cc/ask \u2014 we'll be happy to review it.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -749,7 +749,7 @@
       "platforms": [
         "Google Play"
       ],
-      "text": "Thanks for the review â we're glad you're enjoying our services. We're continually expanding our instrument list and adding new exchanges, and we've noted your suggestion. If we add either exchange, we'll notify everyone right away. In the meantime, feel free to share more suggestions with us by updating your review.",
+      "text": "Thanks for the review \u2014 we're glad you're enjoying our services. We're continually expanding our instrument list and adding new exchanges, and we've noted your suggestion. If we add either exchange, we'll notify everyone right away. In the meantime, feel free to share more suggestions with us by updating your review.",
       "notes": "Google Play 350-character version",
       "author": "Trading 212",
       "status": "approved",
@@ -790,7 +790,7 @@
     },
     {
       "id": "T046",
-      "title": "212 Card â declined transactions",
+      "title": "212 Card \u2014 declined transactions",
       "category": "T212 Card",
       "platforms": [
         "Trustpilot",
@@ -806,14 +806,14 @@
     },
     {
       "id": "T047",
-      "title": "212 Card â frozen due to suspicious transactions",
+      "title": "212 Card \u2014 frozen due to suspicious transactions",
       "category": "T212 Card",
       "platforms": [
         "Trustpilot",
         "Google Play",
         "App Store"
       ],
-      "text": "We're sorry to hear about your experience and understand how frustrating this situation can be.\n\nPlease note that card restrictions aren't applied manually. They are triggered automatically when our system detects activity or transactions that may appear suspicious. In such cases, access to the account or card may be temporarily limited until the necessary verification is completed. While we fully appreciate how inconvenient this may feel, these safeguards are required by regulation and are in place to protect your account.\n\nWe've located your case with the details shared in the review, and additional information has already been shared in the ongoing conversations. To resolve this, please complete the verification checks that will appear in the app. Once done, just let us know â we'll be ready to assist you right away.",
+      "text": "We're sorry to hear about your experience and understand how frustrating this situation can be.\n\nPlease note that card restrictions aren't applied manually. They are triggered automatically when our system detects activity or transactions that may appear suspicious. In such cases, access to the account or card may be temporarily limited until the necessary verification is completed. While we fully appreciate how inconvenient this may feel, these safeguards are required by regulation and are in place to protect your account.\n\nWe've located your case with the details shared in the review, and additional information has already been shared in the ongoing conversations. To resolve this, please complete the verification checks that will appear in the app. Once done, just let us know \u2014 we'll be ready to assist you right away.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -830,7 +830,7 @@
         "Reddit",
         "Discourse Forum"
       ],
-      "text": "We're sorry to see your disappointment.\n\nOn Invest & ISA, you get the raw market spread with no markup. CFD trading involves risk, and we always encourage everyone to consider their risk tolerance and use risk management tools. On CFDs, the spread is floating and depends on market conditions â periods of low liquidity or high volatility can temporarily widen it.\n\nAll orders are executed at the best available price by our system. If you're referring to a specific trade or position, please share more details by updating your review, or contact us via in-app chat so we can take a detailed look and answer your questions.",
+      "text": "We're sorry to see your disappointment.\n\nOn Invest & ISA, you get the raw market spread with no markup. CFD trading involves risk, and we always encourage everyone to consider their risk tolerance and use risk management tools. On CFDs, the spread is floating and depends on market conditions \u2014 periods of low liquidity or high volatility can temporarily widen it.\n\nAll orders are executed at the best available price by our system. If you're referring to a specific trade or position, please share more details by updating your review, or contact us via in-app chat so we can take a detailed look and answer your questions.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -838,7 +838,7 @@
     },
     {
       "id": "T049",
-      "title": "Card deposits â limit & fees",
+      "title": "Card deposits \u2014 limit & fees",
       "category": "Fees & Charges",
       "platforms": [
         "Trustpilot",
@@ -856,7 +856,7 @@
     },
     {
       "id": "T050",
-      "title": "Interest on cash â Cash ISA only",
+      "title": "Interest on cash \u2014 Cash ISA only",
       "category": "Interest & Cash",
       "platforms": [
         "Trustpilot",
@@ -872,7 +872,7 @@
     },
     {
       "id": "T051",
-      "title": "Interest on cash â regular rates",
+      "title": "Interest on cash \u2014 regular rates",
       "category": "Interest & Cash",
       "platforms": [
         "Trustpilot",
@@ -911,7 +911,7 @@
       "platforms": [
         "Google Play"
       ],
-      "text": "Thanks for the review, X â glad you're enjoying Trading 212! Reverse stock splits are corporate actions executed by the company, and we have no control over such decisions. They reduce share count and raise the price proportionally, so your total holding value stays the same. If you have any concerns, please message us via the in-app chat.",
+      "text": "Thanks for the review, X \u2014 glad you're enjoying Trading 212! Reverse stock splits are corporate actions executed by the company, and we have no control over such decisions. They reduce share count and raise the price proportionally, so your total holding value stays the same. If you have any concerns, please message us via the in-app chat.",
       "notes": "Google Play 350-character version. Replace X with reviewer name.",
       "author": "Trading 212",
       "status": "approved",
@@ -919,7 +919,7 @@
     },
     {
       "id": "T054",
-      "title": "5-star â glad you're satisfied",
+      "title": "5-star \u2014 glad you're satisfied",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -934,7 +934,7 @@
     },
     {
       "id": "T055",
-      "title": "5-star â continuous improvements",
+      "title": "5-star \u2014 continuous improvements",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -949,7 +949,7 @@
     },
     {
       "id": "T056",
-      "title": "5-star â great services (v1)",
+      "title": "5-star \u2014 great services (v1)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -964,7 +964,7 @@
     },
     {
       "id": "T057",
-      "title": "5-star â great services (v2)",
+      "title": "5-star \u2014 great services (v2)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -979,7 +979,7 @@
     },
     {
       "id": "T058",
-      "title": "5-star â met expectations",
+      "title": "5-star \u2014 met expectations",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -994,14 +994,14 @@
     },
     {
       "id": "T059",
-      "title": "5-star â smooth experience",
+      "title": "5-star \u2014 smooth experience",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
         "Google Play",
         "App Store"
       ],
-      "text": "Thank you for the 5-star rating!\n\nWe're thrilled to hear you had a smooth user experience â that's exactly what we strive for.",
+      "text": "Thank you for the 5-star rating!\n\nWe're thrilled to hear you had a smooth user experience \u2014 that's exactly what we strive for.",
       "notes": "",
       "author": "Trading 212",
       "status": "approved",
@@ -1009,7 +1009,7 @@
     },
     {
       "id": "T060",
-      "title": "5-star â user interface",
+      "title": "5-star \u2014 user interface",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1024,7 +1024,7 @@
     },
     {
       "id": "T061",
-      "title": "5-star â reliable experience",
+      "title": "5-star \u2014 reliable experience",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1039,7 +1039,7 @@
     },
     {
       "id": "T062",
-      "title": "5-star â glad you're satisfied (short)",
+      "title": "5-star \u2014 glad you're satisfied (short)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1054,7 +1054,7 @@
     },
     {
       "id": "T063",
-      "title": "5-star â meets expectations",
+      "title": "5-star \u2014 meets expectations",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1069,7 +1069,7 @@
     },
     {
       "id": "T064",
-      "title": "5-star â motivated to improve",
+      "title": "5-star \u2014 motivated to improve",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1084,7 +1084,7 @@
     },
     {
       "id": "T065",
-      "title": "5-star â positive experience",
+      "title": "5-star \u2014 positive experience",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1099,7 +1099,7 @@
     },
     {
       "id": "T066",
-      "title": "5-star â right track",
+      "title": "5-star \u2014 right track",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1114,7 +1114,7 @@
     },
     {
       "id": "T067",
-      "title": "5-star â pleasant UX",
+      "title": "5-star \u2014 pleasant UX",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1129,7 +1129,7 @@
     },
     {
       "id": "T068",
-      "title": "5-star â like app & features",
+      "title": "5-star \u2014 like app & features",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1144,7 +1144,7 @@
     },
     {
       "id": "T069",
-      "title": "5-star â top-notch rating",
+      "title": "5-star \u2014 top-notch rating",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1159,7 +1159,7 @@
     },
     {
       "id": "T070",
-      "title": "5-star â easy to use",
+      "title": "5-star \u2014 easy to use",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1174,7 +1174,7 @@
     },
     {
       "id": "T071",
-      "title": "5-star â industry leader",
+      "title": "5-star \u2014 industry leader",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1189,7 +1189,7 @@
     },
     {
       "id": "T072",
-      "title": "5-star â helpful staff & UX",
+      "title": "5-star \u2014 helpful staff & UX",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1204,7 +1204,7 @@
     },
     {
       "id": "T073",
-      "title": "5-star â account organisation",
+      "title": "5-star \u2014 account organisation",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1219,7 +1219,7 @@
     },
     {
       "id": "T074",
-      "title": "5-star â user-friendly",
+      "title": "5-star \u2014 user-friendly",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1234,7 +1234,7 @@
     },
     {
       "id": "T075",
-      "title": "5-star â easy to navigate",
+      "title": "5-star \u2014 easy to navigate",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1249,7 +1249,7 @@
     },
     {
       "id": "T076",
-      "title": "5-star â daily interest feature",
+      "title": "5-star \u2014 daily interest feature",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1264,7 +1264,7 @@
     },
     {
       "id": "T077",
-      "title": "5-star â customer satisfaction",
+      "title": "5-star \u2014 customer satisfaction",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1279,7 +1279,7 @@
     },
     {
       "id": "T078",
-      "title": "5-star â great customer service",
+      "title": "5-star \u2014 great customer service",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1294,7 +1294,7 @@
     },
     {
       "id": "T079",
-      "title": "5-star â enjoying app & features",
+      "title": "5-star \u2014 enjoying app & features",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1309,7 +1309,7 @@
     },
     {
       "id": "T080",
-      "title": "5-star â prompt support",
+      "title": "5-star \u2014 prompt support",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1324,7 +1324,7 @@
     },
     {
       "id": "T081",
-      "title": "5-star â pie feature",
+      "title": "5-star \u2014 pie feature",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1339,7 +1339,7 @@
     },
     {
       "id": "T082",
-      "title": "5-star â easy setup & funding",
+      "title": "5-star \u2014 easy setup & funding",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1354,7 +1354,7 @@
     },
     {
       "id": "T083",
-      "title": "5-star â like the app (short)",
+      "title": "5-star \u2014 like the app (short)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1369,7 +1369,7 @@
     },
     {
       "id": "T084",
-      "title": "5-star â interest rates & app (v1)",
+      "title": "5-star \u2014 interest rates & app (v1)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1384,7 +1384,7 @@
     },
     {
       "id": "T085",
-      "title": "5-star â interest rates & app (v2)",
+      "title": "5-star \u2014 interest rates & app (v2)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1399,7 +1399,7 @@
     },
     {
       "id": "T086",
-      "title": "5-star â easy & informative",
+      "title": "5-star \u2014 easy & informative",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1414,7 +1414,7 @@
     },
     {
       "id": "T087",
-      "title": "5-star â would recommend",
+      "title": "5-star \u2014 would recommend",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1429,7 +1429,7 @@
     },
     {
       "id": "T088",
-      "title": "5-star â info at your fingertips",
+      "title": "5-star \u2014 info at your fingertips",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1444,7 +1444,7 @@
     },
     {
       "id": "T089",
-      "title": "5-star â enjoy using",
+      "title": "5-star \u2014 enjoy using",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1459,7 +1459,7 @@
     },
     {
       "id": "T090",
-      "title": "5-star â user-friendly & reliable",
+      "title": "5-star \u2014 user-friendly & reliable",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1474,7 +1474,7 @@
     },
     {
       "id": "T091",
-      "title": "5-star â nudge for improvement",
+      "title": "5-star \u2014 nudge for improvement",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1489,7 +1489,7 @@
     },
     {
       "id": "T092",
-      "title": "5-star â positive CS interaction",
+      "title": "5-star \u2014 positive CS interaction",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1504,7 +1504,7 @@
     },
     {
       "id": "T093",
-      "title": "5-star â easy to use (v2)",
+      "title": "5-star \u2014 easy to use (v2)",
       "category": "Positive Reviews",
       "platforms": [
         "Trustpilot",
@@ -1516,21 +1516,6 @@
       "author": "Trading 212",
       "status": "approved",
       "dateAdded": "16/03/2025"
-    },
-    {
-      "id": "T094",
-      "title": "Interest Existing Clients + BoE Explanation",
-      "category": "Interest & Cash",
-      "platforms": [
-        "Trustpilot",
-        "App Store",
-        "Google Maps"
-      ],
-      "text": "We're sorry to see that our services didn't quite match your expectations.\n\nWhile some promotions may be tailored for new users, this doesn't reflect a lack of appreciation for our existing users and our ongoing campaigns are never meant to overlook the loyalty of existing users.\n\nThe Cash ISA rate we offer tracks the Bank of England (BoE) base rate to stay aligned with market conditions. This means the rate we offer automatically adjusts for everyone when the Bank of England changes its base rate, while the fixed rate secured by joining during a promotional campaign remains the same. Still, we understand your point, and if there's a promotion available for existing users, we'll make the appropriate announcements right away. In the meantime, please let us know if you have any additional feedback by updating your review.",
-      "notes": "",
-      "author": "Momchil Georgiev",
-      "status": "approved",
-      "dateAdded": "26/03/2026"
     }
   ]
 }
