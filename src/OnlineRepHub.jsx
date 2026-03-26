@@ -70,6 +70,8 @@ const GUIDE_SECTIONS = [
 
 const ALL_PLATFORMS = ["Trustpilot","Google Play","App Store","Google Maps","Reddit","X","Facebook","YouTube","Instagram","LinkedIn","Threads","Discourse Forum","TikTok"];
 
+const TEAM_MEMBERS = ["Momchil Georgiev","Kristiyan Ganchev","Bogomil Hadzhiyski","Veselin Valkov"];
+
 const PLATFORM_COLORS = {
   "X":"#000","Instagram":"#E4405F","Facebook":"#1877F2","Reddit":"#FF4500",
   "Trustpilot":"#00B67A","Google Play":"#34A853","App Store":"#007AFF",
@@ -85,7 +87,11 @@ async function submitToGitHub(templateData, pat) {
   const fileRes = await fetch(GITHUB_API, {
     headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json" }
   });
-  if (!fileRes.ok) throw new Error(fileRes.status === 401 ? "Invalid GitHub token. Check your PAT in settings." : `GitHub API error: ${fileRes.status}`);
+  if (!fileRes.ok) throw new Error(
+    fileRes.status === 401 ? "Invalid GitHub token — check your PAT in settings (🔑)." :
+    fileRes.status === 404 ? "Repo or file not found. Check the token has repo access." :
+    `GitHub API error: ${fileRes.status}`
+  );
   const fileData = await fileRes.json();
   const sha = fileData.sha;
   const raw = atob(fileData.content.replace(/\n/g, ""));
@@ -135,7 +141,10 @@ async function submitToGitHub(templateData, pat) {
   });
   if (!updateRes.ok) {
     const err = await updateRes.json();
-    throw new Error(err.message || "Failed to save to GitHub.");
+    const msg = err.message || "Failed to save to GitHub.";
+    throw new Error(
+      msg === "Not Found" ? "Write access denied — your GitHub token needs repo write access. Ask Momchil to add you as a collaborator, or use the shared team token." : msg
+    );
   }
   return newId;
 }
@@ -523,7 +532,7 @@ function AddTemplateModal({ categories, onSave, onClose }) {
   const [useCustomCat,   setUseCustomCat]   = useState(false);
   const [text,           setText]           = useState("");
   const [notes,          setNotes]          = useState("");
-  const [author,         setAuthor]         = useState("");
+  const [author,         setAuthor]         = useState(TEAM_MEMBERS[0]);
   const [platforms,      setPlatforms]      = useState([]);
   const [saving,         setSaving]         = useState(false);
   const [saveError,      setSaveError]      = useState(null);
@@ -531,7 +540,7 @@ function AddTemplateModal({ categories, onSave, onClose }) {
 
   const togglePlatform = p => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
-  const canSave = title.trim() && text.trim() && author.trim() && platforms.length > 0 &&
+  const canSave = title.trim() && text.trim() && author && platforms.length > 0 &&
     (useCustomCat ? customCategory.trim() : category);
 
   const handleSave = async () => {
@@ -641,7 +650,9 @@ function AddTemplateModal({ categories, onSave, onClose }) {
 
           <div style={{ marginBottom: 24 }}>
             <label style={labelStyle}>Your name *</label>
-            <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="e.g. Alex" style={inputStyle} />
+            <select value={author} onChange={e => setAuthor(e.target.value)} style={inputStyle}>
+              {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
 
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
