@@ -88,7 +88,8 @@ async function submitToGitHub(templateData, pat) {
   if (!fileRes.ok) throw new Error(fileRes.status === 401 ? "Invalid GitHub token. Check your PAT in settings." : `GitHub API error: ${fileRes.status}`);
   const fileData = await fileRes.json();
   const sha = fileData.sha;
-  const current = JSON.parse(atob(fileData.content.replace(/\n/g, "")));
+  const raw = atob(fileData.content.replace(/\n/g, ""));
+  const current = JSON.parse(new TextDecoder("utf-8").decode(Uint8Array.from(raw, c => c.charCodeAt(0))));
 
   // 2. Generate next ID
   const maxN = (current.templates || []).reduce((m, t) => {
