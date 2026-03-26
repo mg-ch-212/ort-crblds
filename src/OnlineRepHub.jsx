@@ -153,7 +153,6 @@ export default function SocialMediaHub() {
   const [showAddModal, setShowAddModal]         = useState(false);
   const [showSettings, setShowSettings]         = useState(false);
   const [loading, setLoading]                   = useState(true);
-  const [syncStatus, setSyncStatus]             = useState(null);
   const [fetchError, setFetchError]             = useState(null);
   const [ghPat, setGhPat]                       = useState(() => localStorage.getItem("ort_gh_pat") || "");
 
@@ -166,8 +165,7 @@ export default function SocialMediaHub() {
     else localStorage.removeItem("ort_gh_pat");
   };
 
-  const loadData = useCallback(async (showSync = false) => {
-    if (showSync) setSyncStatus("syncing");
+  const loadData = useCallback(async () => {
     try {
       const res = await fetch(`${RAW_URL}?t=${Date.now()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -175,10 +173,8 @@ export default function SocialMediaHub() {
       setAllTemplates((data.templates || []).filter(t => t.status === "approved"));
       setCategories(data.categories || []);
       setFetchError(null);
-      if (showSync) { setSyncStatus("synced"); setTimeout(() => setSyncStatus(null), 2000); }
     } catch (e) {
       setFetchError("Couldn't load templates. Check your connection.");
-      if (showSync) { setSyncStatus("error"); setTimeout(() => setSyncStatus(null), 3000); }
     }
   }, []);
 
@@ -242,7 +238,7 @@ export default function SocialMediaHub() {
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 38, height: 38, background: "rgba(0,182,122,0.12)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📋</div>
                 <div>
-                  <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.3, color: "#FFF", margin: 0 }}>Online Reputation Hub</h1>
+                  <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.3, color: "#FFF", margin: 0 }}>ORT Battleground</h1>
                   <div style={{ fontSize: 13, color: "#8B949E", marginTop: 2 }}>Trading 212 · Templates & Team Guide</div>
                 </div>
               </div>
@@ -294,16 +290,6 @@ export default function SocialMediaHub() {
               <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                 <input type="text" placeholder="Search replies by keyword..." value={search} onChange={e => setSearch(e.target.value)}
                   style={{ flex: 1, border: "1px solid #D0D7DE", borderRadius: 8, padding: "10px 14px", fontSize: 14, fontFamily: "inherit", outline: "none", background: "#F6F8FA" }} />
-                <button onClick={() => loadData(true)} title="Refresh templates" style={{
-                  background: syncStatus === "synced" ? "#DCFCE7" : syncStatus === "error" ? "#FEF2F2" : "#F6F8FA",
-                  color:      syncStatus === "synced" ? "#166534" : syncStatus === "error" ? "#DC2626" : "#57606A",
-                  border: `1px solid ${syncStatus === "synced" ? "#BBF7D0" : syncStatus === "error" ? "#FECACA" : "#D0D7DE"}`,
-                  borderRadius: 8, padding: "10px 14px", fontSize: 13, cursor: "pointer", fontFamily: "inherit",
-                  whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s"
-                }}>
-                  {syncStatus === "syncing" ? "⟳" : syncStatus === "synced" ? "✓" : syncStatus === "error" ? "✕" : "⟳"}{" "}
-                  {syncStatus === "syncing" ? "Syncing…" : syncStatus === "synced" ? "Synced" : syncStatus === "error" ? "Failed" : "Sync"}
-                </button>
                 <button onClick={() => { if (!ghPat) { setShowSettings(true); } else { setShowAddModal(true); } }}
                   style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
                   + Add Template
@@ -315,14 +301,18 @@ export default function SocialMediaHub() {
                   border: `1px solid ${!platformFilter ? "#0D1117" : "#D0D7DE"}`,
                   background: !platformFilter ? "#0D1117" : "#FFF", color: !platformFilter ? "#FFF" : "#57606A"
                 }}>All</button>
-                {usedPlatforms.map(p => (
-                  <button key={p} onClick={() => setPlatformFilter(platformFilter === p ? null : p)} style={{
-                    fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
-                    border: `1px solid ${platformFilter === p ? (PLATFORM_COLORS[p] || "#888") : "#D0D7DE"}`,
-                    background: platformFilter === p ? `${PLATFORM_COLORS[p] || "#888"}14` : "#FFF",
-                    color: platformFilter === p ? (PLATFORM_COLORS[p] || "#888") : "#57606A"
-                  }}>{p}</button>
-                ))}
+                {usedPlatforms.map(p => {
+                  const c = PLATFORM_COLORS[p] || "#888";
+                  const active = platformFilter === p;
+                  return (
+                    <button key={p} onClick={() => setPlatformFilter(active ? null : p)} style={{
+                      fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
+                      border: `1px solid ${c}${active ? "80" : "40"}`,
+                      background: active ? `${c}20` : `${c}0d`,
+                      color: c
+                    }}>{p}</button>
+                  );
+                })}
               </div>
               {(search || platformFilter) && (
                 <div style={{ marginTop: 10, fontSize: 12, color: "#57606A" }}>
@@ -444,7 +434,7 @@ export default function SocialMediaHub() {
 
         {/* ── Footer ── */}
         <div style={{ textAlign: "center", padding: "20px 0 8px", fontSize: 11, color: "#8B949E" }}>
-          Trading 212 Online Reputation Team · Internal Use Only
+          Trading 212 ORT Battleground · Internal Use Only
         </div>
       </div>
 
