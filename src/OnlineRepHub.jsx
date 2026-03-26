@@ -8,6 +8,7 @@ const REPO_NAME   = "ort-crblds";
 const FILE_PATH   = "templates.json";
 const RAW_URL     = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
 const GITHUB_API  = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+const APP_PIN     = "0000"; // ← Change this to your PIN
 
 // ═══════════════════════════════════════════════
 //  TEAM GUIDE SECTIONS
@@ -69,8 +70,7 @@ const GUIDE_SECTIONS = [
 ];
 
 const ALL_PLATFORMS = ["Trustpilot","Google Play","App Store","Google Maps","Reddit","X","Facebook","YouTube","Instagram","LinkedIn","Threads","Discourse Forum","TikTok"];
-
-const TEAM_MEMBERS = ["Momchil Georgiev","Kristiyan Ganchev","Bogomil Hadzhiyski","Veselin Valkov"];
+const TEAM_MEMBERS  = ["Momchil Georgiev","Kristiyan Ganchev","Bogomil Hadzhiyski","Veselin Valkov"];
 
 const PLATFORM_COLORS = {
   "X":"#000","Instagram":"#E4405F","Facebook":"#1877F2","Reddit":"#FF4500",
@@ -82,8 +82,7 @@ const PLATFORM_COLORS = {
 // ═══════════════════════════════════════════════
 //  GITHUB API HELPERS
 // ═══════════════════════════════════════════════
-async function submitToGitHub(templateData, pat) {
-  // 1. Get current file + SHA
+async function getFileAndSha(pat) {
   const fileRes = await fetch(GITHUB_API, {
     headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json" }
   });
@@ -96,57 +95,65 @@ async function submitToGitHub(templateData, pat) {
   const sha = fileData.sha;
   const raw = atob(fileData.content.replace(/\n/g, ""));
   const current = JSON.parse(new TextDecoder("utf-8").decode(Uint8Array.from(raw, c => c.charCodeAt(0))));
+  return { sha, current };
+}
 
-  // 2. Generate next ID
-  const maxN = (current.templates || []).reduce((m, t) => {
-    return Math.max(m, parseInt((t.id || "T000").replace("T", "")) || 0);
-  }, 0);
-  const newId = "T" + String(maxN + 1).padStart(3, "0");
-
-  // 3. Build new template entry
-  const today = new Date().toLocaleDateString("en-GB");
-  const newTemplate = {
-    id: newId,
-    title: templateData.title,
-    category: templateData.category,
-    platforms: templateData.platforms,
-    text: templateData.text,
-    notes: templateData.notes || "",
-    author: templateData.author,
-    status: "draft",
-    dateAdded: today
-  };
-
-  current.templates = [...(current.templates || []), newTemplate];
-
-  // 4. Add new category to categories list if it doesn't exist
-  if (templateData.isNewCategory && templateData.category) {
-    const exists = (current.categories || []).some(c => c.name === templateData.category);
-    if (!exists) {
-      const maxOrder = (current.categories || []).reduce((m, c) => Math.max(m, c.order || 0), 0);
-      current.categories = [...(current.categories || []), {
-        name: templateData.category,
-        icon: "📌",
-        order: maxOrder + 1
-      }];
-    }
-  }
-
-  // 5. Commit to GitHub
+async function commitFile(current, sha, message, pat) {
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2))));
   const updateRes = await fetch(GITHUB_API, {
     method: "PUT",
     headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
-    body: JSON.stringify({ message: `Add template: ${templateData.title}`, content: encoded, sha })
+    body: JSON.stringify({ message, content: encoded, sha })
   });
   if (!updateRes.ok) {
     const err = await updateRes.json();
     const msg = err.message || "Failed to save to GitHub.";
     throw new Error(
-      msg === "Not Found" ? "Write access denied — your GitHub token needs repo write access. Ask Momchil to add you as a collaborator, or use the shared team token." : msg
+      msg === "Not Found" ? "Write access denied — use the shared team token (🔑)." : msg
     );
   }
+}
+
+async function submitToGitHub(templateData, pat) {
+  const { sha, current } = await getFileAndSha(pat);
+  const maxN = (current.templates || []).reduce((m, t) => Math.max(m, parseInt((t.id || "T000").replace("T","")) || 0), 0);
+  const newId = "T" + String(maxN + 1).padStart(3, "0");
+  const today = new Date().toLocaleDateString("en-GB");
+  const newTemplate = {
+    id: newId, title: templateData.title, category: templateData.category,
+    platforms: templateData.platforms, text: templateData.text,
+    notes: templateData.notes || "", author: templateData.author,
+    status: "draft", dateAdded: today
+  };
+  current.templates = [...(current.templates || []), newTemplate];
+  if (templateData.isNewCategory && templateData.category) {
+    const exists = (current.categories || []).some(c => c.name === templateData.category);
+    if (!exists) {
+      const maxOrder = (current.categories || []).reduce((m, c) => Math.max(m, c.order || 0), 0);
+      current.categories = [...(current.categories || []), { name: templateData.category, icon: "📌", order: maxOrder + 1 }];
+    }
+  }
+  await commitFile(current, sha, `Add template: ${templateData.title}`, pat);
   return newId;
+}
+
+async function editTemplateOnGitHub(id, templateData, pat) {
+  const { sha, current } = await getFileAndSha(pat);
+  const today = new Date().toLocaleDateString("en-GB");
+  current.templates = current.templates.map(t =>
+    t.id === id
+      ? { ...t, title: templateData.title, category: templateData.category, platforms: templateData.platforms, text: templateData.text, notes: templateData.notes || "", status: "draft", editedAt: today }
+      : t
+  );
+  await commitFile(current, sha, `Edit request: ${templateData.title}`, pat);
+}
+
+async function deleteTemplateOnGitHub(id, title, pat) {
+  const { sha, current } = await getFileAndSha(pat);
+  current.templates = current.templates.map(t =>
+    t.id === id ? { ...t, status: "delete-requested" } : t
+  );
+  await commitFile(current, sha, `Delete request: ${title}`, pat);
 }
 
 // ═══════════════════════════════════════════════
@@ -156,17 +163,21 @@ export default function SocialMediaHub() {
   const [activeTab, setActiveTab]               = useState("templates");
   const [search, setSearch]                     = useState("");
   const [platformFilter, setPlatformFilter]     = useState(null);
+  const [authorFilter, setAuthorFilter]         = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [openGuideSections, setOpenGuideSections] = useState({});
   const [copiedId, setCopiedId]                 = useState(null);
   const [showAddModal, setShowAddModal]         = useState(false);
   const [showSettings, setShowSettings]         = useState(false);
+  const [editingTemplate, setEditingTemplate]   = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId]   = useState(null);
+  const [actionLoading, setActionLoading]       = useState(false);
   const [loading, setLoading]                   = useState(true);
   const [fetchError, setFetchError]             = useState(null);
   const [ghPat, setGhPat]                       = useState(() => localStorage.getItem("ort_gh_pat") || "");
-
-  const [categories, setCategories]   = useState([]);
-  const [allTemplates, setAllTemplates] = useState([]);
+  const [unlocked, setUnlocked]                 = useState(() => sessionStorage.getItem("ort_unlocked") === "1");
+  const [categories, setCategories]             = useState([]);
+  const [allTemplates, setAllTemplates]         = useState([]);
 
   const savePat = (pat) => {
     setGhPat(pat);
@@ -182,12 +193,17 @@ export default function SocialMediaHub() {
       setAllTemplates((data.templates || []).filter(t => t.status === "approved"));
       setCategories(data.categories || []);
       setFetchError(null);
-    } catch (e) {
+    } catch {
       setFetchError("Couldn't load templates. Check your connection.");
     }
   }, []);
 
-  useEffect(() => { loadData(false).finally(() => setLoading(false)); }, [loadData]);
+  useEffect(() => { loadData().finally(() => setLoading(false)); }, [loadData]);
+
+  // ── PIN gate ──
+  if (!unlocked) return (
+    <PinModal onUnlock={() => { sessionStorage.setItem("ort_unlocked", "1"); setUnlocked(true); }} />
+  );
 
   // ── Build category tree ──
   const mergedCategories = (() => {
@@ -198,7 +214,7 @@ export default function SocialMediaHub() {
       if (!catMap[t.category]) catMap[t.category] = { name: t.category, icon: iconMap[t.category] || "📌", replies: [] };
       catMap[t.category].replies.push({ ...t, builtIn: t.author === "Trading 212" });
     });
-    return Object.values(catMap).sort((a, b) => ((orderMap[a.name] ?? 999) - (orderMap[b.name] ?? 999)));
+    return Object.values(catMap).sort((a, b) => (orderMap[a.name] ?? 999) - (orderMap[b.name] ?? 999));
   })();
 
   const filtered = (() => {
@@ -208,12 +224,14 @@ export default function SocialMediaHub() {
       replies: cat.replies.filter(r => {
         const matchSearch   = !q || r.title.toLowerCase().includes(q) || r.text.toLowerCase().includes(q);
         const matchPlatform = !platformFilter || r.platforms.includes(platformFilter);
-        return matchSearch && matchPlatform;
+        const matchAuthor   = !authorFilter || r.author === authorFilter;
+        return matchSearch && matchPlatform && matchAuthor;
       })
     })).filter(c => c.replies.length > 0);
   })();
 
   const usedPlatforms  = [...new Set(mergedCategories.flatMap(c => c.replies.flatMap(r => r.platforms)))];
+  const teamAuthors    = [...new Set(allTemplates.filter(t => t.author && t.author !== "Trading 212").map(t => t.author))];
   const totalReplies   = mergedCategories.reduce((s, c) => s + c.replies.length, 0);
   const teamAddedCount = allTemplates.filter(t => t.author !== "Trading 212").length;
   const filteredTotal  = filtered.reduce((s, c) => s + c.replies.length, 0);
@@ -227,6 +245,19 @@ export default function SocialMediaHub() {
     }
     setCopiedId(rid);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDelete = async (templateId, templateTitle) => {
+    setActionLoading(true);
+    try {
+      await deleteTemplateOnGitHub(templateId, templateTitle, ghPat);
+      setDeleteConfirmId(null);
+      await loadData();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading) return (
@@ -304,7 +335,9 @@ export default function SocialMediaHub() {
                   + Add Template
                 </button>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+
+              {/* Platform filter */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: teamAuthors.length > 0 ? 10 : 0 }}>
                 <button onClick={() => setPlatformFilter(null)} style={{
                   fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
                   border: `1px solid ${!platformFilter ? "#0D1117" : "#D0D7DE"}`,
@@ -323,7 +356,23 @@ export default function SocialMediaHub() {
                   );
                 })}
               </div>
-              {(search || platformFilter) && (
+
+              {/* Author filter — only shown when team-added templates exist */}
+              {teamAuthors.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 10, borderTop: "1px solid #F0F0F0", alignItems: "center" }}>
+                  <span style={{ fontSize: 11, color: "#8B949E", marginRight: 2 }}>By member:</span>
+                  {teamAuthors.map(a => (
+                    <button key={a} onClick={() => setAuthorFilter(authorFilter === a ? null : a)} style={{
+                      fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 500, fontFamily: "inherit",
+                      border: `1px solid ${authorFilter === a ? "#6366F1" : "#D0D7DE"}`,
+                      background: authorFilter === a ? "#EEF2FF" : "#FFF",
+                      color: authorFilter === a ? "#4F46E5" : "#57606A"
+                    }}>{a}</button>
+                  ))}
+                </div>
+              )}
+
+              {(search || platformFilter || authorFilter) && (
                 <div style={{ marginTop: 10, fontSize: 12, color: "#57606A" }}>
                   Showing {filteredTotal} {filteredTotal === 1 ? "reply" : "replies"} across {filtered.length} {filtered.length === 1 ? "category" : "categories"}
                 </div>
@@ -357,9 +406,11 @@ export default function SocialMediaHub() {
                         const rid = `${cat.name}-${ri}`;
                         const isCopied = copiedId === rid;
                         const isTeamAdded = !r.builtIn;
+                        const isDeleteConfirm = deleteConfirmId === rid;
                         return (
                           <div key={rid} style={{ background: isTeamAdded ? "#F0FDF4" : "#F6F8FA", borderRadius: 10, padding: 16, marginBottom: 8, border: `1px solid ${isTeamAdded ? "#BBF7D0" : "#E1E4E8"}` }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, gap: 8 }}>
+                            {/* Card header */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: isDeleteConfirm ? 8 : 10, gap: 8 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: "#1F2328" }}>{r.title}</div>
                                 {isTeamAdded && (
@@ -368,11 +419,43 @@ export default function SocialMediaHub() {
                                   </span>
                                 )}
                               </div>
-                              <button onClick={() => handleCopy(rid, r.text)} style={{
-                                background: isCopied ? "#1A7F37" : "#24292F", color: "#FFF", border: "none", borderRadius: 6,
-                                padding: "5px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 500, fontFamily: "inherit", flexShrink: 0
-                              }}>{isCopied ? "✓ Copied" : "Copy"}</button>
+                              <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                                {ghPat && (
+                                  <>
+                                    <button
+                                      onClick={() => { setDeleteConfirmId(null); setEditingTemplate(r); }}
+                                      title="Edit template"
+                                      style={{ background: "#F6F8FA", color: "#57606A", border: "1px solid #D0D7DE", borderRadius: 6, padding: "5px 9px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      ✏️
+                                    </button>
+                                    <button
+                                      onClick={() => setDeleteConfirmId(isDeleteConfirm ? null : rid)}
+                                      title="Delete template"
+                                      style={{ background: isDeleteConfirm ? "#FEF2F2" : "#F6F8FA", color: isDeleteConfirm ? "#DC2626" : "#57606A", border: `1px solid ${isDeleteConfirm ? "#FECACA" : "#D0D7DE"}`, borderRadius: 6, padding: "5px 9px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      🗑
+                                    </button>
+                                  </>
+                                )}
+                                <button onClick={() => handleCopy(rid, r.text)} style={{
+                                  background: isCopied ? "#1A7F37" : "#24292F", color: "#FFF", border: "none", borderRadius: 6,
+                                  padding: "5px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 500, fontFamily: "inherit", flexShrink: 0
+                                }}>{isCopied ? "✓ Copied" : "Copy"}</button>
+                              </div>
                             </div>
+
+                            {/* Delete confirmation */}
+                            {isDeleteConfirm && (
+                              <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 12, color: "#991B1B" }}>Mark for deletion? It will be hidden until removed in GitHub.</span>
+                                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                  <button onClick={() => setDeleteConfirmId(null)} style={{ background: "#FFF", border: "1px solid #D0D7DE", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", color: "#57606A" }}>Cancel</button>
+                                  <button onClick={() => handleDelete(r.id, r.title)} disabled={actionLoading} style={{ background: "#DC2626", color: "#FFF", border: "none", borderRadius: 6, padding: "4px 14px", fontSize: 12, fontWeight: 600, cursor: actionLoading ? "default" : "pointer", fontFamily: "inherit" }}>
+                                    {actionLoading ? "…" : "Confirm"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
                             <div style={{ fontSize: 13, color: "#444", lineHeight: 1.65, whiteSpace: "pre-line", marginBottom: 10 }}>{r.text}</div>
                             {r.notes && (
                               <div style={{ fontSize: 12, color: "#9A6700", background: "#FFF8C5", padding: "6px 10px", borderRadius: 6, border: "1px solid #F5E0A0", marginBottom: 10 }}>
@@ -447,9 +530,7 @@ export default function SocialMediaHub() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════ */}
-      {/*  SETTINGS MODAL (PAT)                 */}
-      {/* ══════════════════════════════════════ */}
+      {/* ── Settings Modal ── */}
       {showSettings && (
         <PATSettingsModal
           currentPat={ghPat}
@@ -458,9 +539,7 @@ export default function SocialMediaHub() {
         />
       )}
 
-      {/* ══════════════════════════════════════ */}
-      {/*  ADD TEMPLATE MODAL                   */}
-      {/* ══════════════════════════════════════ */}
+      {/* ── Add Template Modal ── */}
       {showAddModal && (
         <AddTemplateModal
           categories={categories.map(c => c.name)}
@@ -471,6 +550,76 @@ export default function SocialMediaHub() {
           onClose={() => setShowAddModal(false)}
         />
       )}
+
+      {/* ── Edit Template Modal ── */}
+      {editingTemplate && (
+        <AddTemplateModal
+          categories={categories.map(c => c.name)}
+          initialData={editingTemplate}
+          onSave={async (template) => {
+            await editTemplateOnGitHub(editingTemplate.id, template, ghPat);
+            setEditingTemplate(null);
+          }}
+          onClose={() => setEditingTemplate(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  PIN MODAL
+// ═══════════════════════════════════════════════
+function PinModal({ onUnlock }) {
+  const [pin, setPin]     = useState("");
+  const [error, setError] = useState(false);
+
+  const attempt = () => {
+    if (pin === APP_PIN) {
+      onUnlock();
+    } else {
+      setError(true);
+      setPin("");
+      setTimeout(() => setError(false), 1500);
+    }
+  };
+
+  return (
+    <div style={{ fontFamily: "'Poppins', -apple-system, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#F4F4F2", WebkitFontSmoothing: "antialiased" }}>
+      <div style={{ background: "#FFF", borderRadius: 20, padding: "40px 36px", width: "100%", maxWidth: 340, boxShadow: "0 8px 40px rgba(0,0,0,0.1)", textAlign: "center" }}>
+        <div style={{ width: 52, height: 52, background: "linear-gradient(135deg, #0D1117, #1C2333)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 20px" }}>📋</div>
+        <div style={{ fontSize: 19, fontWeight: 700, color: "#1F2328", marginBottom: 4 }}>ORT Battleground</div>
+        <div style={{ fontSize: 13, color: "#8B949E", marginBottom: 28 }}>Enter your team PIN to continue</div>
+        <input
+          type="password"
+          value={pin}
+          onChange={e => setPin(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && attempt()}
+          placeholder="••••"
+          maxLength={12}
+          autoFocus
+          style={{
+            width: "100%", border: `2px solid ${error ? "#FECACA" : "#E1E4E8"}`,
+            borderRadius: 10, padding: "12px 14px", fontSize: 18, letterSpacing: 6,
+            textAlign: "center", fontFamily: "inherit", outline: "none",
+            background: error ? "#FEF2F2" : "#F6F8FA", boxSizing: "border-box",
+            marginBottom: 12, transition: "border-color 0.2s, background 0.2s",
+            color: "#1F2328"
+          }}
+        />
+        {error && <div style={{ fontSize: 12, color: "#DC2626", marginBottom: 12 }}>Incorrect PIN — try again</div>}
+        <button
+          onClick={attempt}
+          disabled={!pin}
+          style={{
+            width: "100%", background: pin ? "#00B67A" : "#E5E7EB",
+            color: pin ? "#FFF" : "#9CA3AF", border: "none", borderRadius: 10,
+            padding: "12px", fontSize: 14, fontWeight: 600,
+            cursor: pin ? "pointer" : "default", fontFamily: "inherit", transition: "all 0.2s"
+          }}>
+          Unlock
+        </button>
+      </div>
     </div>
   );
 }
@@ -487,14 +636,12 @@ function PATSettingsModal({ currentPat, onSave, onClose }) {
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E1E4E8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328" }}>🔑 GitHub Token</div>
-            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Required to submit new templates. Stored locally in your browser only.</div>
+            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Required to submit, edit or delete templates. Stored locally in your browser only.</div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8B949E", padding: 4 }}>✕</button>
         </div>
         <div style={{ padding: "20px 24px" }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: "#1F2328", marginBottom: 6, display: "block" }}>
-            Personal Access Token (classic)
-          </label>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#1F2328", marginBottom: 6, display: "block" }}>Personal Access Token (classic)</label>
           <input
             type="password"
             value={pat}
@@ -513,7 +660,8 @@ function PATSettingsModal({ currentPat, onSave, onClose }) {
             )}
             <button onClick={() => onSave(pat.trim())} disabled={!pat.trim()} style={{
               background: pat.trim() ? "#00B67A" : "#E5E7EB", color: pat.trim() ? "#FFF" : "#9CA3AF",
-              border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600, cursor: pat.trim() ? "pointer" : "default", fontFamily: "inherit"
+              border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600,
+              cursor: pat.trim() ? "pointer" : "default", fontFamily: "inherit"
             }}>Save token</button>
           </div>
         </div>
@@ -523,24 +671,28 @@ function PATSettingsModal({ currentPat, onSave, onClose }) {
 }
 
 // ═══════════════════════════════════════════════
-//  ADD TEMPLATE MODAL
+//  ADD / EDIT TEMPLATE MODAL
 // ═══════════════════════════════════════════════
-function AddTemplateModal({ categories, onSave, onClose }) {
-  const [title,          setTitle]          = useState("");
-  const [category,       setCategory]       = useState(categories[0] || "");
+function AddTemplateModal({ categories, initialData, onSave, onClose }) {
+  const isEdit = !!initialData;
+
+  const [title,          setTitle]          = useState(initialData?.title || "");
+  const [category,       setCategory]       = useState(initialData?.category || categories[0] || "");
   const [customCategory, setCustomCategory] = useState("");
   const [useCustomCat,   setUseCustomCat]   = useState(false);
-  const [text,           setText]           = useState("");
-  const [notes,          setNotes]          = useState("");
-  const [author,         setAuthor]         = useState(TEAM_MEMBERS[0]);
-  const [platforms,      setPlatforms]      = useState([]);
+  const [text,           setText]           = useState(initialData?.text || "");
+  const [notes,          setNotes]          = useState(initialData?.notes || "");
+  const [author,         setAuthor]         = useState(
+    TEAM_MEMBERS.includes(initialData?.author) ? initialData.author : TEAM_MEMBERS[0]
+  );
+  const [platforms,      setPlatforms]      = useState(initialData?.platforms || []);
   const [saving,         setSaving]         = useState(false);
   const [saveError,      setSaveError]      = useState(null);
   const [saved,          setSaved]          = useState(false);
 
   const togglePlatform = p => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
-  const canSave = title.trim() && text.trim() && author && platforms.length > 0 &&
+  const canSave = title.trim() && text.trim() && platforms.length > 0 &&
     (useCustomCat ? customCategory.trim() : category);
 
   const handleSave = async () => {
@@ -548,13 +700,13 @@ function AddTemplateModal({ categories, onSave, onClose }) {
     setSaving(true); setSaveError(null);
     try {
       await onSave({
-        title:          title.trim(),
-        category:       useCustomCat ? customCategory.trim() : category,
-        text:           text.trim(),
-        notes:          notes.trim(),
-        author:         author.trim(),
+        title: title.trim(),
+        category: useCustomCat ? customCategory.trim() : category,
+        text: text.trim(),
+        notes: notes.trim(),
+        author,
         platforms,
-        isNewCategory:  useCustomCat
+        isNewCategory: useCustomCat
       });
       setSaved(true);
     } catch (e) {
@@ -570,9 +722,13 @@ function AddTemplateModal({ categories, onSave, onClose }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
       <div style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 400, padding: "40px 32px", textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328", marginBottom: 8 }}>Template submitted!</div>
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328", marginBottom: 8 }}>
+          {isEdit ? "Edit submitted!" : "Template submitted!"}
+        </div>
         <div style={{ fontSize: 13, color: "#57606A", lineHeight: 1.6, marginBottom: 24 }}>
-          Added to the repo as a <strong>Draft</strong>. It will appear here once approved in GitHub.
+          {isEdit
+            ? "Changes saved as Draft — the template will reappear once approved in GitHub."
+            : "Added to the repo as a Draft — it will appear here once approved in GitHub."}
         </div>
         <button onClick={onClose} style={{ background: "#00B67A", color: "#FFF", border: "none", borderRadius: 8, padding: "10px 28px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
           Close
@@ -586,8 +742,12 @@ function AddTemplateModal({ categories, onSave, onClose }) {
       <div onClick={e => e.stopPropagation()} style={{ background: "#FFF", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto", padding: 0 }}>
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E1E4E8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328" }}>Add Response Template</div>
-            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>Submitted as Draft — visible once approved in GitHub</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#1F2328" }}>
+              {isEdit ? "Edit Response Template" : "Add Response Template"}
+            </div>
+            <div style={{ fontSize: 12, color: "#8B949E", marginTop: 2 }}>
+              {isEdit ? "Saved as Draft — visible again once approved in GitHub" : "Submitted as Draft — visible once approved in GitHub"}
+            </div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#8B949E", padding: 4 }}>✕</button>
         </div>
@@ -610,9 +770,11 @@ function AddTemplateModal({ categories, onSave, onClose }) {
                 <select value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <button onClick={() => setUseCustomCat(true)} style={{ background: "#F6F8FA", border: "1px solid #D0D7DE", borderRadius: 8, padding: "0 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", color: "#57606A" }}>
-                  + New
-                </button>
+                {!isEdit && (
+                  <button onClick={() => setUseCustomCat(true)} style={{ background: "#F6F8FA", border: "1px solid #D0D7DE", borderRadius: 8, padding: "0 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", color: "#57606A" }}>
+                    + New
+                  </button>
+                )}
               </div>
             ) : (
               <div style={{ display: "flex", gap: 8 }}>
@@ -665,7 +827,7 @@ function AddTemplateModal({ categories, onSave, onClose }) {
               border: "none", borderRadius: 8, padding: "9px 20px", fontSize: 13, fontWeight: 600,
               cursor: canSave && !saving ? "pointer" : "default", fontFamily: "inherit"
             }}>
-              {saving ? "Saving…" : "Submit Template"}
+              {saving ? "Saving…" : isEdit ? "Save Changes" : "Submit Template"}
             </button>
           </div>
         </div>
