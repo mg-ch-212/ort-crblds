@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T12:20:36.309Z",
+  "updatedAt": "2026-03-27T12:35:40.099Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T12:20:35.745Z",
+    "updatedAt": "2026-03-27T12:35:39.494Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -674,23 +674,15 @@
         "text": "\texcellent easy to use",
         "createdAt": "2026-03-20T13:38:33.000Z",
         "replied": false
-      },
-      {
-        "id": "08d456e3-c8bd-4b12-a6ed-9dc5a6a48b6f",
-        "stars": 5,
-        "author": "Fabio Comanducci",
-        "text": "\tintuitive, easy to use.",
-        "createdAt": "2026-03-20T12:32:01.000Z",
-        "replied": true
       }
     ],
     "stats": {
-      "fetchedCount": 85,
-      "avgRating": "3.89"
+      "fetchedCount": 84,
+      "avgRating": "3.88"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T12:20:36.309Z",
+    "updatedAt": "2026-03-27T12:35:40.099Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
