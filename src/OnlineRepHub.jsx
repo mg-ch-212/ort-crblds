@@ -270,8 +270,8 @@ export default function SocialMediaHub() {
     setActionLoading(id);
     setAllTemplates(prev => prev.filter(t => t.id!==id));
     setDeleteConfirmId(null);
-    try { await deleteTemplateOnGitHub(id,title,ghPat); loadData(); }
-    catch(e) { alert(e.message); loadData(); }
+    try { await deleteTemplateOnGitHub(id,title,ghPat); }
+    catch(e) { alert(e.message); loadData(); } // reload only on failure to restore state
     finally { setActionLoading(null); }
   };
   const handleApprove = async (id, title) => {
@@ -282,14 +282,14 @@ export default function SocialMediaHub() {
         return prev.filter(t => t.id!==id && t.id!==item.editOf);
       return prev.filter(t => t.id!==id);
     });
-    try { await approveTemplateOnGitHub(id,title,ghPat); loadData(); }
+    try { await approveTemplateOnGitHub(id,title,ghPat); }
     catch(e) { alert(e.message); loadData(); }
     finally { setActionLoading(null); }
   };
   const handleDiscard = async (id, title) => {
     setActionLoading(id);
     setAllTemplates(prev => prev.filter(t => t.id!==id));
-    try { await discardTemplateOnGitHub(id,title,ghPat); loadData(); }
+    try { await discardTemplateOnGitHub(id,title,ghPat); }
     catch(e) { alert(e.message); loadData(); }
     finally { setActionLoading(null); }
   };
