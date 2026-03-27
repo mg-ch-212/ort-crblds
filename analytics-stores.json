@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T17:20:38.639Z",
+  "updatedAt": "2026-03-27T17:35:39.216Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T17:20:37.125Z",
+    "updatedAt": "2026-03-27T17:35:38.577Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -650,23 +650,15 @@
         "text": "\tfees are extremely high when you buy Nasdaq stocks",
         "createdAt": "2026-03-20T18:08:16.000Z",
         "replied": true
-      },
-      {
-        "id": "0097a47b-2c5f-4645-a027-307964f40c2d",
-        "stars": 5,
-        "author": "Mahmoud",
-        "text": "\tgood app",
-        "createdAt": "2026-03-20T17:33:02.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 82,
-      "avgRating": "3.87"
+      "fetchedCount": 81,
+      "avgRating": "3.85"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T17:20:38.639Z",
+    "updatedAt": "2026-03-27T17:35:39.216Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
