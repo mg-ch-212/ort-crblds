@@ -149,13 +149,23 @@ async function submitToGitHub(d, pat) {
 }
 async function editTemplateOnGitHub(id, d, pat) {
   const { sha, current } = await getFileAndSha(pat);
-  current.templates = current.templates.map(t => t.id===id ? { ...t, title:d.title, category:d.category, platforms:d.platforms, text:d.text, notes:d.notes||"", status:"draft", editedAt:new Date().toLocaleDateString("en-GB") } : t);
+  const maxN = (current.templates||[]).reduce((m,t) => Math.max(m, parseInt((t.id||"T000").replace("T",""))||0), 0);
+  const draftId = "T"+String(maxN+1).padStart(3,"0");
+  const today = new Date().toLocaleDateString("en-GB");
+  current.templates = [...current.templates, { id:draftId, title:d.title, category:d.category, platforms:d.platforms, text:d.text, notes:d.notes||"", author:d.author||"", status:"draft", pendingAction:"edit", editOf:id, dateAdded:today }];
   await commitFile(current, sha, `Edit request: ${d.title}`, pat);
 }
 async function approveTemplateOnGitHub(id, title, pat) {
   const { sha, current } = await getFileAndSha(pat);
-  current.templates = current.templates.map(t => t.id===id ? { ...t, status:"approved" } : t);
-  await commitFile(current, sha, `Approve template: ${title}`, pat);
+  const template = current.templates.find(t => t.id===id);
+  if (template?.pendingAction==="edit" && template?.editOf) {
+    current.templates = current.templates
+      .filter(t => t.id!==template.editOf)
+      .map(t => t.id===id ? { ...t, status:"approved", pendingAction:undefined, editOf:undefined } : t);
+  } else {
+    current.templates = current.templates.map(t => t.id===id ? { ...t, status:"approved" } : t);
+  }
+  await commitFile(current, sha, `Approve: ${title}`, pat);
 }
 async function discardTemplateOnGitHub(id, title, pat) {
   const { sha, current } = await getFileAndSha(pat);
@@ -184,7 +194,7 @@ export default function SocialMediaHub() {
   const [showSettings, setShowSettings]         = useState(false);
   const [editingTemplate, setEditingTemplate]   = useState(null);
   const [deleteConfirmId, setDeleteConfirmId]   = useState(null);
-  const [actionLoading, setActionLoading]       = useState(false);
+  const [actionLoading, setActionLoading]       = useState(null); // stores the ID being actioned
   const [loading, setLoading]                   = useState(true);
   const [fetchError, setFetchError]             = useState(null);
   const [ghPat, setGhPat]                       = useState(() => localStorage.getItem("ort_gh_pat") || "");
@@ -256,9 +266,33 @@ export default function SocialMediaHub() {
     catch { const ta=document.createElement("textarea"); ta.value=text; ta.style.cssText="position:fixed;opacity:0;left:-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
     setCopiedId(rid); setTimeout(() => setCopiedId(null), 2000);
   };
-  const handleDelete  = async (id, title) => { setActionLoading(true); try { await deleteTemplateOnGitHub(id,title,ghPat); setDeleteConfirmId(null); await loadData(); } catch(e){alert(e.message);} finally{setActionLoading(false);} };
-  const handleApprove = async (id, title) => { setActionLoading(true); try { await approveTemplateOnGitHub(id,title,ghPat); await loadData(); } catch(e){alert(e.message);} finally{setActionLoading(false);} };
-  const handleDiscard = async (id, title) => { setActionLoading(true); try { await discardTemplateOnGitHub(id,title,ghPat); await loadData(); } catch(e){alert(e.message);} finally{setActionLoading(false);} };
+  const handleDelete = async (id, title) => {
+    setActionLoading(id);
+    setAllTemplates(prev => prev.filter(t => t.id!==id));
+    setDeleteConfirmId(null);
+    try { await deleteTemplateOnGitHub(id,title,ghPat); loadData(); }
+    catch(e) { alert(e.message); loadData(); }
+    finally { setActionLoading(null); }
+  };
+  const handleApprove = async (id, title) => {
+    setActionLoading(id);
+    const item = allTemplates.find(t => t.id===id);
+    setAllTemplates(prev => {
+      if (item?.pendingAction==="edit" && item?.editOf)
+        return prev.filter(t => t.id!==id && t.id!==item.editOf);
+      return prev.filter(t => t.id!==id);
+    });
+    try { await approveTemplateOnGitHub(id,title,ghPat); loadData(); }
+    catch(e) { alert(e.message); loadData(); }
+    finally { setActionLoading(null); }
+  };
+  const handleDiscard = async (id, title) => {
+    setActionLoading(id);
+    setAllTemplates(prev => prev.filter(t => t.id!==id));
+    try { await discardTemplateOnGitHub(id,title,ghPat); loadData(); }
+    catch(e) { alert(e.message); loadData(); }
+    finally { setActionLoading(null); }
+  };
 
   if (loading) return <div style={{fontFamily:"'Poppins',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",color:"#8B949E"}}>Loading…</div>;
 
@@ -266,7 +300,7 @@ export default function SocialMediaHub() {
 
   const navItems = [
     { id:"templates", icon:"💬", label:"Templates" },
-    ...(ghPat ? [{ id:"drafts", icon:"📥", label:"Drafts", badge:pendingCount }] : []),
+    ...(ghPat ? [{ id:"pending", icon:"📥", label:"Pending Items", badge:pendingCount }] : []),
     { id:"schedule",  icon:"📅", label:"Schedule" },
     { id:"resources", icon:"🔗", label:"Resources", soon:true },
   ];
@@ -422,7 +456,7 @@ export default function SocialMediaHub() {
                                       <span style={{fontSize:12,color:"#991B1B"}}>Mark for deletion? Hidden until removed in GitHub.</span>
                                       <div style={{display:"flex",gap:6,flexShrink:0}}>
                                         <button onClick={()=>setDeleteConfirmId(null)} style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>Cancel</button>
-                                        <button onClick={()=>handleDelete(r.id,r.title)} disabled={actionLoading} style={{background:"#DC2626",color:"#FFF",border:"none",borderRadius:6,padding:"4px 14px",fontSize:12,fontWeight:600,cursor:actionLoading?"default":"pointer",fontFamily:"inherit"}}>{actionLoading?"…":"Confirm"}</button>
+                                        <button onClick={()=>handleDelete(r.id,r.title)} disabled={!!actionLoading} style={{background:"#DC2626",color:"#FFF",border:"none",borderRadius:6,padding:"4px 14px",fontSize:12,fontWeight:600,cursor:actionLoading?"default":"pointer",fontFamily:"inherit"}}>{actionLoading===r.id?"Deleting…":"Confirm"}</button>
                                       </div>
                                     </div>
                                   )}
@@ -466,30 +500,40 @@ export default function SocialMediaHub() {
             </>
           )}
 
-          {/* ══ DRAFTS SECTION ══ */}
-          {activeSection==="drafts" && ghPat && (
-            <>
-              <div style={{marginBottom:20}}>
-                <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Drafts & Pending Actions</h2>
-                <div style={{fontSize:13,color:"#8B949E",marginTop:2}}>Review, approve or discard submitted templates</div>
-              </div>
-              {(draftTemplates.length===0&&deleteRequested.length===0) && (
-                <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
-                  <div style={{fontSize:32,marginBottom:12}}>✅</div>
-                  <div style={{fontSize:15,fontWeight:600,color:"#1F2328",marginBottom:6}}>All clear</div>
-                  <div style={{fontSize:13,color:"#8B949E"}}>No pending drafts or deletion requests.</div>
+          {/* ══ PENDING ITEMS SECTION ══ */}
+          {activeSection==="pending" && ghPat && (() => {
+            const newDrafts      = draftTemplates.filter(t => !t.pendingAction);
+            const editDrafts     = draftTemplates.filter(t => t.pendingAction==="edit");
+            const allEmpty       = newDrafts.length===0 && editDrafts.length===0 && deleteRequested.length===0;
+            const anyAbove       = (n) => n > 0;
+            return (
+              <>
+                <div style={{marginBottom:20}}>
+                  <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Pending Items</h2>
+                  <div style={{fontSize:13,color:"#8B949E",marginTop:2}}>New templates, edit requests and deletion requests awaiting action</div>
                 </div>
-              )}
-              {draftTemplates.length>0 && (<>
-                <div style={{fontSize:12,fontWeight:600,color:"#8B949E",letterSpacing:0.5,textTransform:"uppercase",marginBottom:10}}>Awaiting approval — {draftTemplates.length}</div>
-                {draftTemplates.map(t => <DraftCard key={t.id} template={t} type="draft" actionLoading={actionLoading} onApprove={()=>handleApprove(t.id,t.title)} onDiscard={()=>handleDiscard(t.id,t.title)} />)}
-              </>)}
-              {deleteRequested.length>0 && (<>
-                <div style={{fontSize:12,fontWeight:600,color:"#8B949E",letterSpacing:0.5,textTransform:"uppercase",margin:draftTemplates.length>0?"20px 0 10px":"0 0 10px"}}>Deletion requests — {deleteRequested.length}</div>
-                {deleteRequested.map(t => <DraftCard key={t.id} template={t} type="delete" actionLoading={actionLoading} onApprove={()=>handleDiscard(t.id,t.title)} onDiscard={()=>handleApprove(t.id,t.title)} />)}
-              </>)}
-            </>
-          )}
+                {allEmpty && (
+                  <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
+                    <div style={{fontSize:32,marginBottom:12}}>✅</div>
+                    <div style={{fontSize:15,fontWeight:600,color:"#1F2328",marginBottom:6}}>All clear</div>
+                    <div style={{fontSize:13,color:"#8B949E"}}>No pending items right now.</div>
+                  </div>
+                )}
+                {newDrafts.length>0 && (<>
+                  <div style={{fontSize:12,fontWeight:600,color:"#8B949E",letterSpacing:0.5,textTransform:"uppercase",marginBottom:10}}>New templates — {newDrafts.length}</div>
+                  {newDrafts.map(t => <DraftCard key={t.id} template={t} type="new" isLoading={actionLoading===t.id} onApprove={()=>handleApprove(t.id,t.title)} onDiscard={()=>handleDiscard(t.id,t.title)} />)}
+                </>)}
+                {editDrafts.length>0 && (<>
+                  <div style={{fontSize:12,fontWeight:600,color:"#8B949E",letterSpacing:0.5,textTransform:"uppercase",margin:newDrafts.length>0?"20px 0 10px":"0 0 10px"}}>Edit requests — {editDrafts.length}</div>
+                  {editDrafts.map(t => <DraftCard key={t.id} template={t} type="edit" isLoading={actionLoading===t.id} onApprove={()=>handleApprove(t.id,t.title)} onDiscard={()=>handleDiscard(t.id,t.title)} />)}
+                </>)}
+                {deleteRequested.length>0 && (<>
+                  <div style={{fontSize:12,fontWeight:600,color:"#8B949E",letterSpacing:0.5,textTransform:"uppercase",margin:(anyAbove(newDrafts.length)||anyAbove(editDrafts.length))?"20px 0 10px":"0 0 10px"}}>Deletion requests — {deleteRequested.length}</div>
+                  {deleteRequested.map(t => <DraftCard key={t.id} template={t} type="delete" isLoading={actionLoading===t.id} onApprove={()=>handleDiscard(t.id,t.title)} onDiscard={()=>handleApprove(t.id,t.title)} />)}
+                </>)}
+              </>
+            );
+          })()}
 
           {/* ══ SCHEDULE SECTION ══ */}
           {activeSection==="schedule" && <ScheduleSection />}
@@ -913,24 +957,47 @@ function SchedToast({ message, onDone }) {
 // ═══════════════════════════════════════════════
 //  DRAFT CARD
 // ═══════════════════════════════════════════════
-function DraftCard({ template:t, type, actionLoading, onApprove, onDiscard }) {
+function DraftCard({ template:t, type, isLoading, onApprove, onDiscard }) {
   const [expanded, setExpanded] = useState(false);
-  const isDel = type==="delete";
+  const isDel  = type === "delete";
+  const isEdit = type === "edit";
+
+  // Badge appearance per type
+  const badge = isDel
+    ? { label:"DELETE REQUEST", bg:"#FEE2E2", color:"#991B1B" }
+    : isEdit
+    ? { label:"EDIT REQUEST",   bg:"#DBEAFE", color:"#1E40AF" }
+    : { label:"NEW DRAFT",      bg:"#FEF3C7", color:"#92400E" };
+
+  // Border tint per type
+  const borderColor = isDel ? "#FECACA" : isEdit ? "#BFDBFE" : "#E1E4E8";
+
+  // Button labels — idle vs loading
+  const approveIdle    = isDel ? "Remove"   : "Approve";
+  const approveLoading = isDel ? "Removing…": "Approving…";
+  const discardIdle    = isDel ? "Keep"     : "Discard";
+  const discardLoading = isDel ? "Keeping…" : "Discarding…";
+
   return (
-    <div style={{background:"#FFF",borderRadius:12,marginBottom:10,border:`1px solid ${isDel?"#FECACA":"#E1E4E8"}`,overflow:"hidden"}}>
+    <div style={{background:"#FFF",borderRadius:12,marginBottom:10,border:`1px solid ${borderColor}`,overflow:"hidden"}}>
       <div style={{padding:"14px 18px"}}>
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
               <span style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>{t.title}</span>
-              <span style={{fontSize:9,padding:"1px 6px",borderRadius:4,fontWeight:600,background:isDel?"#FEE2E2":"#FEF3C7",color:isDel?"#991B1B":"#92400E"}}>{isDel?"DELETE REQUEST":"DRAFT"}</span>
+              <span style={{fontSize:9,padding:"1px 6px",borderRadius:4,fontWeight:600,background:badge.bg,color:badge.color}}>{badge.label}</span>
+              {isEdit && t.editOf && <span style={{fontSize:10,color:"#8B949E",fontStyle:"italic"}}>replaces {t.editOf}</span>}
             </div>
             <div style={{fontSize:12,color:"#8B949E"}}>{t.category} · {t.author||"Unknown"} · {t.dateAdded||""}</div>
           </div>
           <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
             <button onClick={()=>setExpanded(!expanded)} style={{background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:6,padding:"5px 10px",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>{expanded?"Hide":"Preview"}</button>
-            <button onClick={onDiscard} disabled={actionLoading} style={{background:isDel?"#DCFCE7":"#FEF2F2",color:isDel?"#166534":"#DC2626",border:`1px solid ${isDel?"#BBF7D0":"#FECACA"}`,borderRadius:6,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:actionLoading?"default":"pointer",fontFamily:"inherit"}}>{isDel?"Keep":"Discard"}</button>
-            <button onClick={onApprove} disabled={actionLoading} style={{background:isDel?"#DC2626":"#00B67A",color:"#FFF",border:"none",borderRadius:6,padding:"5px 14px",fontSize:12,fontWeight:600,cursor:actionLoading?"default":"pointer",fontFamily:"inherit"}}>{actionLoading?"…":isDel?"Remove":"Approve"}</button>
+            <button onClick={onDiscard} disabled={isLoading} style={{background:isDel?"#DCFCE7":"#FEF2F2",color:isDel?"#166534":"#DC2626",border:`1px solid ${isDel?"#BBF7D0":"#FECACA"}`,borderRadius:6,padding:"5px 12px",fontSize:12,fontWeight:600,cursor:isLoading?"default":"pointer",fontFamily:"inherit",minWidth:82,opacity:isLoading?0.65:1}}>
+              {isLoading ? discardLoading : discardIdle}
+            </button>
+            <button onClick={onApprove} disabled={isLoading} style={{background:isDel?"#DC2626":"#00B67A",color:"#FFF",border:"none",borderRadius:6,padding:"5px 14px",fontSize:12,fontWeight:600,cursor:isLoading?"default":"pointer",fontFamily:"inherit",minWidth:90,opacity:isLoading?0.65:1}}>
+              {isLoading ? approveLoading : approveIdle}
+            </button>
           </div>
         </div>
         {expanded && (
@@ -1026,7 +1093,7 @@ function AddTemplateModal({ categories, initialData, onSave, onClose }) {
       <div style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:400,padding:"40px 32px",textAlign:"center"}}>
         <div style={{fontSize:40,marginBottom:16}}>✅</div>
         <div style={{fontSize:17,fontWeight:700,color:"#1F2328",marginBottom:8}}>{isEdit?"Edit submitted!":"Template submitted!"}</div>
-        <div style={{fontSize:13,color:"#57606A",lineHeight:1.6,marginBottom:24}}>{isEdit?"Changes saved as Draft — approve in the Drafts tab.":"Added as Draft — approve it in the Drafts tab."}</div>
+        <div style={{fontSize:13,color:"#57606A",lineHeight:1.6,marginBottom:24}}>{isEdit?"Edit request saved — approve it in Pending Items.":"Submitted as draft — approve it in Pending Items."}</div>
         <button onClick={onClose} style={{background:"#00B67A",color:"#FFF",border:"none",borderRadius:8,padding:"10px 28px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Close</button>
       </div>
     </div>
@@ -1036,7 +1103,7 @@ function AddTemplateModal({ categories, initialData, onSave, onClose }) {
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:560,maxHeight:"90vh",overflow:"auto"}}>
         <div style={{padding:"20px 24px 16px",borderBottom:"1px solid #E1E4E8",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div><div style={{fontSize:17,fontWeight:700,color:"#1F2328"}}>{isEdit?"Edit Response Template":"Add Response Template"}</div><div style={{fontSize:12,color:"#8B949E",marginTop:2}}>Submitted as Draft — approve in the Drafts tab</div></div>
+          <div><div style={{fontSize:17,fontWeight:700,color:"#1F2328"}}>{isEdit?"Edit Response Template":"Add Response Template"}</div><div style={{fontSize:12,color:"#8B949E",marginTop:2}}>Submitted as pending — approve in Pending Items</div></div>
           <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#8B949E",padding:4}}>✕</button>
         </div>
         <div style={{padding:"20px 24px"}}>
