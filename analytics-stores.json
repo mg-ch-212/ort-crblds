@@ -1,8 +1,16 @@
 {
-  "updatedAt": "2026-03-27T20:20:38.195Z",
+  "updatedAt": "2026-03-27T20:35:40.166Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T20:20:37.491Z",
+    "updatedAt": "2026-03-27T20:35:39.131Z",
     "recentReviews": [
+      {
+        "id": "8781f245-0a63-41e3-9f12-32b079041990",
+        "stars": 1,
+        "author": "Julijus Stefan",
+        "text": "\tThe latest update is a huge UX downgrade, especially for CFD. I can no longer see my avg position price without having to tap on each position. And I can no longer see P/L per instrument from a dashboard, only total daily P/L. Whoever designed this update probably hasn't been trading in his life and has no clue what the user experience should look like. I now have to download an old APK file from the internet just to avoid using this awful looking CFD dashboard on the latest update",
+        "createdAt": "2026-03-27T20:29:14.000Z",
+        "replied": false
+      },
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
         "stars": 4,
@@ -629,12 +637,12 @@
       }
     ],
     "stats": {
-      "fetchedCount": 78,
-      "avgRating": "3.90"
+      "fetchedCount": 79,
+      "avgRating": "3.86"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T20:20:38.195Z",
+    "updatedAt": "2026-03-27T20:35:40.166Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
