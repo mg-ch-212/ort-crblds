@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T11:50:41.933Z",
+  "updatedAt": "2026-03-27T12:05:41.085Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T11:50:41.079Z",
+    "updatedAt": "2026-03-27T12:05:40.191Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -690,10 +690,10 @@
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T11:50:41.932Z",
+    "updatedAt": "2026-03-27T12:05:41.085Z",
     "stats": {
-      "rating": 4.67845,
-      "ratingCount": 345955,
+      "rating": 4.67849,
+      "ratingCount": 346011,
       "version": "8.23.0"
     },
     "recentReviews": [
