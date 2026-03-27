@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T18:05:38.886Z",
+  "updatedAt": "2026-03-27T18:20:41.835Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T18:05:38.142Z",
+    "updatedAt": "2026-03-27T18:20:41.323Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -642,23 +642,15 @@
         "text": "\tThere is a problem: some countries are not supported.",
         "createdAt": "2026-03-20T19:12:05.000Z",
         "replied": true
-      },
-      {
-        "id": "30977a40-96e9-4437-aa4a-6a6f033732cd",
-        "stars": 1,
-        "author": "Orange Spill",
-        "text": "\tfees are extremely high when you buy Nasdaq stocks",
-        "createdAt": "2026-03-20T18:08:16.000Z",
-        "replied": true
       }
     ],
     "stats": {
-      "fetchedCount": 81,
-      "avgRating": "3.85"
+      "fetchedCount": 80,
+      "avgRating": "3.89"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T18:05:38.886Z",
+    "updatedAt": "2026-03-27T18:20:41.835Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
