@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T16:50:36.918Z",
+  "updatedAt": "2026-03-27T17:05:43.223Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T16:50:36.357Z",
+    "updatedAt": "2026-03-27T17:05:42.523Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -666,12 +666,454 @@
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T16:50:36.918Z",
+    "updatedAt": "2026-03-27T17:05:43.223Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
       "version": "8.23.0"
     },
-    "recentReviews": []
+    "recentReviews": [
+      {
+        "id": "13879985157",
+        "stars": 4,
+        "author": "Rivi rover",
+        "title": "Growing",
+        "text": "You can see your money grow",
+        "createdAt": "2026-03-23T15:24:48-07:00",
+        "replied": false
+      },
+      {
+        "id": "13878070098",
+        "stars": 5,
+        "author": "477BH",
+        "title": "ISA",
+        "text": "Easy to use, love that it shows daily growth.",
+        "createdAt": "2026-03-23T03:36:01-07:00",
+        "replied": false
+      },
+      {
+        "id": "13874443434",
+        "stars": 5,
+        "author": "xrpdan",
+        "title": "Great App",
+        "text": "So simple to\nUse and that?s exactly want you need from an app.  Well done Trading 212.",
+        "createdAt": "2026-03-22T02:13:10-07:00",
+        "replied": false
+      },
+      {
+        "id": "13867655997",
+        "stars": 5,
+        "author": "124deygonnarunbacktome",
+        "title": "Efficient",
+        "text": "And educational.",
+        "createdAt": "2026-03-20T04:38:09-07:00",
+        "replied": false
+      },
+      {
+        "id": "13867255703",
+        "stars": 1,
+        "author": "graceund",
+        "title": "Closing cfds",
+        "text": "Ridiculous to change the rules and close lines to roll over a current position. I?ll finish with trading as soon as possible",
+        "createdAt": "2026-03-20T01:36:24-07:00",
+        "replied": false
+      },
+      {
+        "id": "13865162945",
+        "stars": 1,
+        "author": "Nirandra",
+        "title": "Recent update closes all the positions",
+        "text": "Worst app",
+        "createdAt": "2026-03-19T10:05:21-07:00",
+        "replied": false
+      },
+      {
+        "id": "13864526649",
+        "stars": 5,
+        "author": "Drags243",
+        "title": "Great app",
+        "text": "Love this app, I?m a complete novice, not looking to invest heavily, but it?s so easy to use and understand even for me!",
+        "createdAt": "2026-03-19T06:31:56-07:00",
+        "replied": false
+      },
+      {
+        "id": "13861141896",
+        "stars": 5,
+        "author": "theDaveB",
+        "title": "Easy to use",
+        "text": "Seems easy to use and my ten pound investment is up to eleven pounds, so am buzzing.",
+        "createdAt": "2026-03-18T06:47:56-07:00",
+        "replied": false
+      },
+      {
+        "id": "13859973932",
+        "stars": 1,
+        "author": "Um2311",
+        "title": "Check all your deposits and withdraws",
+        "text": "Make sure you keep a very good backed up record of every deposit and withdrawal as my numbers never tallied up. They?re in the game to make money and you?re the product.",
+        "createdAt": "2026-03-17T21:44:22-07:00",
+        "replied": false
+      },
+      {
+        "id": "13857101712",
+        "stars": 5,
+        "author": "stu shizzle the bizzle",
+        "title": "Great Financial App",
+        "text": "This app is awesome. It always works does not appear to have any glitches. Also information transactions are always smooth.",
+        "createdAt": "2026-03-17T03:00:17-07:00",
+        "replied": false
+      },
+      {
+        "id": "13856918009",
+        "stars": 4,
+        "author": "holly ?",
+        "title": "Really good",
+        "text": "Good app, easy to navigate and welcoming for beginner traders. However it takes far too long to withdraw funds from the app into other bank accounts. Really, you should be able to withdraw from the spending pot instantly into other bank accounts rather than moving money between pots and then waiting several business days for any money to actually be withdrawn. If it was a lump sum of money, fair enough, but it shouldn?t take a long time for something like ?40 to be withdrawn, especially to a bank account that i can make instant deposits from. I get it may act as an incentive to use the Trading 213 card itself but often I just want to disperse my money into my different savings accounts rather than actively spend it.\nOtherwise its good!!!",
+        "createdAt": "2026-03-17T01:23:21-07:00",
+        "replied": false
+      },
+      {
+        "id": "13855077324",
+        "stars": 5,
+        "author": "OliverRD1981",
+        "title": "Ollie",
+        "text": "I simply LOVE this platform: super easy to use",
+        "createdAt": "2026-03-16T11:27:06-07:00",
+        "replied": false
+      },
+      {
+        "id": "13854389484",
+        "stars": 3,
+        "author": "SallySoulCinema",
+        "title": "New customer rates not honoured",
+        "text": "Disappointed to find there was a 10day limit for new customers to opening an account to transfering money in to get the special 4.5% ISA interest rate via money savings website. Don?t know why whilst rate is still available if I started from scratch today, it can?t be honoured! Setting up the account took a while before deciding on which isa to choose, now that it is open it?s easy to use.",
+        "createdAt": "2026-03-16T07:29:53-07:00",
+        "replied": false
+      },
+      {
+        "id": "13854065482",
+        "stars": 5,
+        "author": "Co77ey",
+        "title": "So easy",
+        "text": "Wow interest daily Just give it a go\nTransfer via your bank and when transfer back so easy",
+        "createdAt": "2026-03-16T05:38:39-07:00",
+        "replied": false
+      },
+      {
+        "id": "13853722053",
+        "stars": 5,
+        "author": "Gugglygud",
+        "title": "My bank",
+        "text": "Very happy with this bank wish I?d joined earlier",
+        "createdAt": "2026-03-16T03:16:02-07:00",
+        "replied": false
+      },
+      {
+        "id": "13853710554",
+        "stars": 5,
+        "author": "Tidy Tara",
+        "title": "Cash ISA",
+        "text": "Excellent, great rate and so easy to set up, notifications handy and app simple to navigate. Very happy:)",
+        "createdAt": "2026-03-16T03:10:27-07:00",
+        "replied": false
+      },
+      {
+        "id": "13846826005",
+        "stars": 4,
+        "author": "Ruffstuff77",
+        "title": "Great trading but free speech limited",
+        "text": "I love the app for it?s functionality.  It even has an area where you can discuss stocks with other members.  Only problem with that is T212 automatically deletes your posts is you want to share an opinion on whether to buy a stock or not.   Come on T212 - stop with the pointless censorship.  We should be able to give onions on stocks freely here.",
+        "createdAt": "2026-03-14T04:26:44-07:00",
+        "replied": false
+      },
+      {
+        "id": "13845981485",
+        "stars": 1,
+        "author": "###shrek###",
+        "title": "Disgusting",
+        "text": "So apparently because I don?t work and can?t work because of disability I?m told that I can?t invest. Not even a small amount to improve my life. Disgusting",
+        "createdAt": "2026-03-13T21:40:10-07:00",
+        "replied": false
+      },
+      {
+        "id": "13844616409",
+        "stars": 5,
+        "author": "AaronHaro",
+        "title": "Some suggestions",
+        "text": "Can you add a metric for dividends and interest earned  in monthly and yearly categories? Thank you",
+        "createdAt": "2026-03-13T12:10:33-07:00",
+        "replied": false
+      },
+      {
+        "id": "13844515330",
+        "stars": 1,
+        "author": "Amn5888",
+        "title": "Unstable platform",
+        "text": "The setting changes in every log in. Its a set up to fail.",
+        "createdAt": "2026-03-13T11:32:14-07:00",
+        "replied": false
+      },
+      {
+        "id": "13842769376",
+        "stars": 5,
+        "author": "guard@",
+        "title": "Trading with 212",
+        "text": "212 is a good reliable platform that has been around for a long time proving its worthiness as a good solid reliable investment and trading platform. 5 stars easily.",
+        "createdAt": "2026-03-12T23:59:28-07:00",
+        "replied": false
+      },
+      {
+        "id": "13841348757",
+        "stars": 5,
+        "author": "ChrisBateson123",
+        "title": "Fantastic App",
+        "text": "This app is incredibly easy and user-friendly for people who aren?t regular traders. Clear and easy to understand.",
+        "createdAt": "2026-03-12T13:08:48-07:00",
+        "replied": false
+      },
+      {
+        "id": "13841291523",
+        "stars": 3,
+        "author": "qotsafanboy",
+        "title": "U.S style options",
+        "text": "When will you have this offering? Not CFDs but a proper options offering?",
+        "createdAt": "2026-03-12T12:46:43-07:00",
+        "replied": false
+      },
+      {
+        "id": "13841039205",
+        "stars": 5,
+        "author": "PurpleBabayaga",
+        "title": "Great for newbies to investments",
+        "text": "Overall a great app for us new to investing. I had no idea where to start but Trading212 was recommended as easy to use with investments if any size at low costs.  I still don?t know what I am doing but read the comments & updates to try and understand the markets.  Sometimes I find the app difficult to navigate but it is generally straightforward and I can keep an eye on my funds at any time.",
+        "createdAt": "2026-03-12T11:11:26-07:00",
+        "replied": false
+      },
+      {
+        "id": "13840729415",
+        "stars": 5,
+        "author": "Ultra Voilet",
+        "title": "Good",
+        "text": "Great app for the starters to play around with market",
+        "createdAt": "2026-03-12T09:20:21-07:00",
+        "replied": false
+      },
+      {
+        "id": "13838503418",
+        "stars": 2,
+        "author": "Toyon456",
+        "title": "Stop loss system",
+        "text": "The stop loss system doesn?t work properly. I lost 30% for that can you fix it please thank you ??",
+        "createdAt": "2026-03-11T16:54:10-07:00",
+        "replied": false
+      },
+      {
+        "id": "13837249398",
+        "stars": 5,
+        "author": "usles media",
+        "title": "Easy to use",
+        "text": "Easy to use app just remember to be sure of what your putting your money into as you can lose money as well as make it for me the main attraction was the cash isa but I?ve also put a small amount into fractional shares but no more than I can afford to lose",
+        "createdAt": "2026-03-11T08:47:04-07:00",
+        "replied": false
+      },
+      {
+        "id": "13836762142",
+        "stars": 5,
+        "author": "Karimzada 786",
+        "title": "MR FAHIM",
+        "text": "I like the app it?s very good",
+        "createdAt": "2026-03-11T06:00:37-07:00",
+        "replied": false
+      },
+      {
+        "id": "13836562367",
+        "stars": 5,
+        "author": "Olegfxx",
+        "title": "klyufik",
+        "text": "Like this app, best one)",
+        "createdAt": "2026-03-11T04:47:17-07:00",
+        "replied": false
+      },
+      {
+        "id": "13833173453",
+        "stars": 5,
+        "author": "Frostie 47",
+        "title": "Easy to use",
+        "text": "Excellent platform to save and trade. 5 stars",
+        "createdAt": "2026-03-10T04:29:04-07:00",
+        "replied": false
+      },
+      {
+        "id": "13832363829",
+        "stars": 2,
+        "author": "Tradinglove4",
+        "title": "Upcoming update of 19 march without any option",
+        "text": "Recently got an email that trading 212 is going to stop all active positions and open new positions when contract of USA Tech 100 is going to expire on 19 march. There is no option given to traders to continue with old system where we are allowed to continue with same positions and adjustment is made within the opened trade instead of closing the full trade and opening a new position. We are only goven an option that we can adjust that if we dont want to open new trade automatically which will furthur book more heavy losses.\nThere should be a 3rd option to continue with old system where positions are adjusted within the trade and trades are continued as it is like previous system when trades contract expires.",
+        "createdAt": "2026-03-09T21:11:19-07:00",
+        "replied": false
+      },
+      {
+        "id": "13830122619",
+        "stars": 5,
+        "author": "KINGSTYLES97",
+        "title": "Mr Ben styles",
+        "text": "Easy easy easy app",
+        "createdAt": "2026-03-09T06:14:54-07:00",
+        "replied": false
+      },
+      {
+        "id": "13829891711",
+        "stars": 5,
+        "author": "ihorovochiz",
+        "title": "Mr Invest",
+        "text": "Good easy to use platform. Like it!",
+        "createdAt": "2026-03-09T04:47:23-07:00",
+        "replied": false
+      },
+      {
+        "id": "13829670069",
+        "stars": 5,
+        "author": "Mr Lee1111",
+        "title": "Great app and great interface",
+        "text": "It?s been a pleasure using this app all round, really enjoy the flexible isa feature and the new YTD feature",
+        "createdAt": "2026-03-09T03:09:10-07:00",
+        "replied": false
+      },
+      {
+        "id": "13829488176",
+        "stars": 4,
+        "author": "Taze shots",
+        "title": "Great app and firm",
+        "text": "All round really good platform that beats the old dinosaurs like HL and they?ll never be able to compete against 212. New update is a step back though I must admit, i wish the layout was kept as it was and hope you guys refer it back. I?ll change to 5 stars as soon as it does.\n\nEdit*they listened to feedback and are reversing the UI. Really good to see that, acknowledging customer feedback and promptly changing. 5 star app\n\nEdit* 2 months later, hasn?t reversed the ui but said would end of January?",
+        "createdAt": "2026-03-09T01:33:46-07:00",
+        "replied": false
+      },
+      {
+        "id": "13829348123",
+        "stars": 1,
+        "author": "dnsywneb",
+        "title": "Withdraw issues",
+        "text": "Should never be withdraw issues I put the money in there let me take you out you Cs",
+        "createdAt": "2026-03-09T00:13:15-07:00",
+        "replied": false
+      },
+      {
+        "id": "13828573409",
+        "stars": 3,
+        "author": "daexvx",
+        "title": "going downhill",
+        "text": "ui is becoming worse and worse with each update. bring back the ui from like a year ago and also it takes 10 years to load into the app now. idk if this is intentional or not but yeah",
+        "createdAt": "2026-03-08T17:36:59-07:00",
+        "replied": false
+      },
+      {
+        "id": "13828469452",
+        "stars": 5,
+        "author": "RussPinks",
+        "title": "Better than all financial apps",
+        "text": "Honestly, this is not only the best app for making investments but I?ve found their T212 card to be better than Revolut, Monzo and Wise. I can have up to ?400 monthly international ATM withdrawals whereas the others are ?200 and I can hold multiple currencies with only a 0.15% FX fee whereas Wise is 0.4% on the free account and with all this you can invest ?20k into the stocks and shares isa per year and get tax free capital gains!!",
+        "createdAt": "2026-03-08T16:51:38-07:00",
+        "replied": false
+      },
+      {
+        "id": "13822744889",
+        "stars": 5,
+        "author": "till pops",
+        "title": "Yess please",
+        "text": "I love recommending",
+        "createdAt": "2026-03-07T02:53:35-07:00",
+        "replied": false
+      },
+      {
+        "id": "13822654339",
+        "stars": 5,
+        "author": "Marketing Guru Master",
+        "title": "Easy As",
+        "text": "The app is easy to use and there?s no fees attached to the cash ISA",
+        "createdAt": "2026-03-07T02:12:55-07:00",
+        "replied": false
+      },
+      {
+        "id": "13820993480",
+        "stars": 5,
+        "author": "Gusher212",
+        "title": "Mk",
+        "text": "It?s your own journey but this is the best and easiest way to start.. \nno negative",
+        "createdAt": "2026-03-06T14:00:29-07:00",
+        "replied": false
+      },
+      {
+        "id": "13820781879",
+        "stars": 5,
+        "author": "1Coombie",
+        "title": "Brilliant",
+        "text": "Absolutely love this app and as a beginner in investing, I love the practice mode where I can mess about and learn about trading at the same time.",
+        "createdAt": "2026-03-06T12:33:01-07:00",
+        "replied": false
+      },
+      {
+        "id": "13819743720",
+        "stars": 5,
+        "author": "AZUREDWAN",
+        "title": "Best trading app",
+        "text": "Brilliant for buy and selling shares",
+        "createdAt": "2026-03-06T06:18:10-07:00",
+        "replied": false
+      },
+      {
+        "id": "13819388826",
+        "stars": 1,
+        "author": "nyxworth_02",
+        "title": "Worst Update",
+        "text": "Worst update ever. Seriously, please bring back the previous version. This new update makes trading unnecessarily frustrating.\n\nYou can no longer see the actual order price clearly because it keeps showing the constantly changing current market price instead. During volatile or peak trading times, when prices move quickly, the entire screen gets blocked by the closing order interface. That means you cannot even see where your order actually is while trying to close it.\n\nIn fast markets, every second matters. Instead of helping traders act quickly, this update makes it harder to understand what is happening with your position. You end up trading almost blind, unable to clearly see your entry or where the price currently sits relative to your order.\n\nThe previous version was simple, transparent, and functional. This one feels cluttered, confusing, and honestly like a step backwards for active traders. Please revert this change or at least give users the option to switch back to the old interface",
+        "createdAt": "2026-03-06T04:12:56-07:00",
+        "replied": false
+      },
+      {
+        "id": "13818710375",
+        "stars": 1,
+        "author": "Digital-Nomad1",
+        "title": "Update ruined it",
+        "text": "I'm honestly gutted and disappointed. This financial application used to be truly top-tier and a pleasure to use, but the latest update ruined it. It feels like you guys chose aesthetics and visuals over actual usability and simple, efficient function. Hiding the portfolio within a tiny swipe-up menu is just ridiculous?the font size is so small that I cannot read it! The previous version was absolutely perfect, and this new design feels like a massive and frustrating step backward. If the interface stays this clunky and difficult to navigate, I am seriously considering moving all of my funds today. I truly hope that you decide to revert these changes immediately... as it is so bad right now.",
+        "createdAt": "2026-03-05T22:34:53-07:00",
+        "replied": false
+      },
+      {
+        "id": "13818128508",
+        "stars": 1,
+        "author": "HeYhG699",
+        "title": "The worst trading app",
+        "text": "Gets worse with every single update - at first they completely ruined the way you buy CFDs, and now they don?t even show you what price you bought your positions at without clicking through twice, per position. They -NEVER- listen to feedback.",
+        "createdAt": "2026-03-05T17:49:19-07:00",
+        "replied": false
+      },
+      {
+        "id": "13815291066",
+        "stars": 5,
+        "author": "P.Aureli",
+        "title": "User friendly",
+        "text": "Straightforward and easy to use",
+        "createdAt": "2026-03-04T22:28:07-07:00",
+        "replied": false
+      },
+      {
+        "id": "13814385237",
+        "stars": 3,
+        "author": "Oliver H99",
+        "title": "Why every update change UI so much",
+        "text": "Ever since I got the app every update has changed the UI-specifically the CFD part, why get rid of the pie chart of asset allocation ? Why is not every order categorised under the stock and now it?s all separate. So many changes that seem so unusual. Is there anyway we can revert updates or edit the user interface by our personal choice ?",
+        "createdAt": "2026-03-04T15:26:05-07:00",
+        "replied": false
+      },
+      {
+        "id": "13810786570",
+        "stars": 5,
+        "author": "D Linford",
+        "title": "Love this app, 5 stars",
+        "text": "Wish you were here 30 years ago! Really enjoying the easy and user friendly app,  no better time to start investing.",
+        "createdAt": "2026-03-03T14:03:29-07:00",
+        "replied": false
+      }
+    ]
   }
 }
