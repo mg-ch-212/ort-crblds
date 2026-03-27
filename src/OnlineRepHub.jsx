@@ -1263,14 +1263,14 @@ function ResourcesSection() {
   const tools = [
     { label:"Falcon",                      url:"https://app.falcon.io/#/engage/overview",                              domain:"falcon.io" },
     { label:"Amplitude",                   url:"https://app.amplitude.com/analytics/trading212/home",                  domain:"amplitude.com" },
-    { label:"Social Moderation Dashboard", url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
+    { label:"Social Moderation",            url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
     { label:"Marqeta",                     url:"https://app.marqeta.com",                                               domain:"marqeta.com" },
   ];
 
   const sheets = [
     { label:"Stats",            url:"https://docs.google.com/spreadsheets/d/1giEdcUX2sphS1P8ieJB5E0o7I0pkW5sa2bxo3wQFsbM/edit?gid=1837238448#gid=1837238448", domain:"docs.google.com" },
     { label:"Post Sizing",      url:"https://docs.google.com/spreadsheets/d/1HNRtj5IfU_gV3ALgUvz2rJ-7_E5jsQfqwvbdDxAsCQc/edit",                                 domain:"docs.google.com" },
-    { label:"212 Social Bans",  url:"https://docs.google.com/spreadsheets/d/1OaKDt7AmqXzabcp02hFHTLZfQiOlBjjfBOjtatuXH4Y/edit?gid=1697261709#gid=1697261709",   domain:"docs.google.com" },
+    { label:"Social Bans",      url:"https://docs.google.com/spreadsheets/d/1OaKDt7AmqXzabcp02hFHTLZfQiOlBjjfBOjtatuXH4Y/edit?gid=1697261709#gid=1697261709",   domain:"docs.google.com" },
   ];
 
   const jira = [
@@ -1301,15 +1301,15 @@ function ResourcesSection() {
 
   const linkCard = ({ label, url, domain, emoji }) => (
     <a key={label} href={url} target="_blank" rel="noopener noreferrer"
-      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#FFF",border:"1px solid #E1E4E8",borderRadius:10,textDecoration:"none",color:"#1F2328",transition:"border-color 0.15s",cursor:"pointer"}}
+      style={{display:"flex",alignItems:"center",gap:10,padding:"0 14px",height:44,background:"#FFF",border:"1px solid #E1E4E8",borderRadius:10,textDecoration:"none",color:"#1F2328",transition:"border-color 0.15s",cursor:"pointer",overflow:"hidden"}}
       onMouseEnter={e=>e.currentTarget.style.borderColor="#0969DA"}
       onMouseLeave={e=>e.currentTarget.style.borderColor="#E1E4E8"}>
       {domain
         ? <img src={favicon(domain)} alt="" width={18} height={18} style={{borderRadius:3,flexShrink:0}} onError={e=>{e.target.style.display="none";}}/>
         : <span style={{fontSize:16,lineHeight:1,flexShrink:0}}>{emoji}</span>
       }
-      <span style={{fontSize:13,fontWeight:500}}>{label}</span>
-      <span style={{marginLeft:"auto",fontSize:11,color:"#C0C0C0"}}>↗</span>
+      <span style={{fontSize:13,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</span>
+      <span style={{marginLeft:"auto",fontSize:11,color:"#C0C0C0",flexShrink:0}}>↗</span>
     </a>
   );
 
@@ -1324,25 +1324,25 @@ function ResourcesSection() {
 
       {/* Quick Access */}
       {sectionLabel("Quick Access")}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8,marginBottom:20}}>
         {quickLinks.map(l => linkCard(l))}
       </div>
 
       {/* Tools */}
       {sectionLabel("Tools")}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8,marginBottom:20}}>
         {tools.map(l => linkCard(l))}
       </div>
 
       {/* Sheets */}
       {sectionLabel("Sheets")}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8,marginBottom:20}}>
         {sheets.map(l => linkCard(l))}
       </div>
 
       {/* Jira & Confluence */}
       {sectionLabel("Jira & Confluence")}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8,marginBottom:20}}>
         {jira.map(l => linkCard(l))}
       </div>
 
