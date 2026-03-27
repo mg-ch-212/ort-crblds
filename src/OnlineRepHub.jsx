@@ -444,7 +444,7 @@ export default function SocialMediaHub() {
     { id:"schedule",    icon:"📅", label:"Schedule" },
     { id:"analytics",   icon:"📊", label:"Analytics" },
     { id:"performance", icon:"🏆", label:"Team Performance", soon:true },
-    { id:"resources",   icon:"🔗", label:"Resources",        soon:true },
+    { id:"resources",   icon:"🔗", label:"Resources" },
   ];
 
   return (
@@ -693,13 +693,7 @@ export default function SocialMediaHub() {
           )}
 
           {/* ══ RESOURCES SECTION ══ */}
-          {activeSection==="resources" && (
-            <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
-              <div style={{fontSize:40,marginBottom:16}}>🔗</div>
-              <div style={{fontSize:17,fontWeight:700,color:"#1F2328",marginBottom:8}}>Resources</div>
-              <div style={{fontSize:13,color:"#8B949E"}}>Useful links and references — coming soon.</div>
-            </div>
-          )}
+          {activeSection==="resources" && <ResourcesSection />}
 
           <div style={{textAlign:"center",padding:"28px 0 8px",fontSize:11,color:"#8B949E"}}>Trading 212 ORT Battleground · Internal Use Only</div>
         </div>
@@ -1241,6 +1235,119 @@ function BarChart({ data, valueKey="n", color="#00B67A", height=96 }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  RESOURCES SECTION
+// ═══════════════════════════════════════════════
+function ResourcesSection() {
+  const [socialsOpen, setSocialsOpen] = useState(true);
+
+  const favicon = domain => `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
+
+  const quickLinks = [
+    { label:"Gmail",      url:"https://mail.google.com",                                  emoji:"✉️" },
+    { label:"hiBob",      url:"https://app.hibob.com/home",                               emoji:"👤" },
+    { label:"Backoffice", url:"https://backoffice.live.trading212.avus.io/customercare",   emoji:"🏢" },
+    { label:"ChatGPT",    url:"https://chatgpt.com",                                       emoji:"🤖" },
+    { label:"Claude",     url:"https://claude.ai",                                         emoji:"✨" },
+  ];
+
+  const tools = [
+    { label:"Falcon",    url:"https://app.falcon.io/#/engage/overview",                     domain:"falcon.io" },
+    { label:"Amplitude", url:"https://app.amplitude.com/analytics/trading212/home",         domain:"amplitude.com" },
+  ];
+
+  const sheets = [
+    { label:"Stats",       url:"https://docs.google.com/spreadsheets/d/1giEdcUX2sphS1P8ieJB5E0o7I0pkW5sa2bxo3wQFsbM/edit?gid=1837238448#gid=1837238448", domain:"docs.google.com" },
+    { label:"Post Sizing", url:"https://docs.google.com/spreadsheets/d/1HNRtj5IfU_gV3ALgUvz2rJ-7_E5jsQfqwvbdDxAsCQc/edit",                                 domain:"docs.google.com" },
+  ];
+
+  const jira = [
+    { label:"Online Rep Board",        url:"https://trading212.atlassian.net/jira/software/c/projects/OR/boards/271",  domain:"atlassian.net" },
+    { label:"Fin Promotions Board",    url:"https://trading212.atlassian.net/jira/software/c/projects/FP/boards/216",  domain:"atlassian.net" },
+    { label:"Confluence Wiki",         url:"https://trading212.atlassian.net/wiki/spaces/GCRR/overview?homepageId=11239712", domain:"atlassian.net" },
+  ];
+
+  const socials = [
+    { label:"Trustpilot",          url:"https://businessapp.b2b.trustpilot.com/reviews",                                                                                                          domain:"trustpilot.com" },
+    { label:"X / Twitter",         url:"https://twitter.com/home",                                                                                                                                domain:"twitter.com" },
+    { label:"Instagram",           url:"https://www.instagram.com/",                                                                                                                              domain:"instagram.com" },
+    { label:"Meta Business Suite", url:"https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=874174999312139&mio=0&asset_id=440091156053861",                           domain:"facebook.com" },
+    { label:"LinkedIn",            url:"https://www.linkedin.com/feed/",                                                                                                                          domain:"linkedin.com" },
+    { label:"YouTube",             url:"https://www.youtube.com/",                                                                                                                                domain:"youtube.com" },
+    { label:"Reddit",              url:"https://www.reddit.com/r/trading212/new/",                                                                                                                domain:"reddit.com" },
+    { label:"App Store Connect",   url:"https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/ng/app/566325832/ios/ratingsResponses",                                                  domain:"apple.com" },
+    { label:"Google Play Console", url:"https://play.google.com/console/u/0/developers/5000184188293498537/app/4974459231864602677/user-feedback/reviews",                                         domain:"google.com" },
+    { label:"Community Forum",     url:"https://community.trading212.com/",                                                                                                                        domain:"trading212.com" },
+  ];
+
+  const sectionLabel = (text) => (
+    <div style={{fontSize:11,fontWeight:700,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.8,marginBottom:10,marginTop:4}}>{text}</div>
+  );
+
+  const linkCard = ({ label, url, domain, emoji }) => (
+    <a key={label} href={url} target="_blank" rel="noopener noreferrer"
+      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#FFF",border:"1px solid #E1E4E8",borderRadius:10,textDecoration:"none",color:"#1F2328",transition:"border-color 0.15s",cursor:"pointer"}}
+      onMouseEnter={e=>e.currentTarget.style.borderColor="#0969DA"}
+      onMouseLeave={e=>e.currentTarget.style.borderColor="#E1E4E8"}>
+      {domain
+        ? <img src={favicon(domain)} alt="" width={18} height={18} style={{borderRadius:3,flexShrink:0}} onError={e=>{e.target.style.display="none";}}/>
+        : <span style={{fontSize:16,lineHeight:1,flexShrink:0}}>{emoji}</span>
+      }
+      <span style={{fontSize:13,fontWeight:500}}>{label}</span>
+      <span style={{marginLeft:"auto",fontSize:11,color:"#C0C0C0"}}>↗</span>
+    </a>
+  );
+
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+        <div>
+          <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Resources</h2>
+          <div style={{fontSize:13,color:"#8B949E",marginTop:2}}>Quick access to tools, dashboards and channels</div>
+        </div>
+      </div>
+
+      {/* Quick Access */}
+      {sectionLabel("Quick Access")}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+        {quickLinks.map(l => linkCard(l))}
+      </div>
+
+      {/* Tools */}
+      {sectionLabel("Tools")}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+        {tools.map(l => linkCard(l))}
+      </div>
+
+      {/* Sheets */}
+      {sectionLabel("Sheets")}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8,marginBottom:20}}>
+        {sheets.map(l => linkCard(l))}
+      </div>
+
+      {/* Jira & Confluence */}
+      {sectionLabel("Jira & Confluence")}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8,marginBottom:20}}>
+        {jira.map(l => linkCard(l))}
+      </div>
+
+      {/* Socials — collapsible */}
+      <div style={{background:"#FFF",border:"1px solid #E1E4E8",borderRadius:12,overflow:"hidden",marginBottom:8}}>
+        <button onClick={()=>setSocialsOpen(o=>!o)}
+          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 16px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
+          <span style={{fontSize:11,fontWeight:700,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.8}}>Socials & Platforms</span>
+          <span style={{fontSize:12,color:"#8B949E",transition:"transform 0.2s",display:"inline-block",transform:socialsOpen?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+        </button>
+        {socialsOpen && (
+          <div style={{padding:"0 12px 12px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8}}>
+            {socials.map(l => linkCard(l))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
