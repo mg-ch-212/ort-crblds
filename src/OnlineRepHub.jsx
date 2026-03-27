@@ -8,6 +8,7 @@ const REPO_NAME  = "ort-crblds";
 const FILE_PATH  = "templates.json";
 const RAW_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+const STORES_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/analytics-stores.json`;
 const APP_PIN    = "8XGc-DyH4eRzG5oj7h-Y3C0T";
 
 // Trustpilot — Business Unit ID is public (same as a domain name)
@@ -1123,6 +1124,19 @@ function AnalyticsSection({ tpKey }) {
   const [platform,    setPlatform]    = useState("trustpilot");
   const [range,       setRange]       = useState("24h");
   const [snaps,       setSnaps]       = useState(() => loadAnalyticsSnaps());
+  const [storeData,    setStoreData]    = useState(null);
+  const [storeLoading, setStoreLoading] = useState(false);
+  const [storeError,   setStoreError]   = useState(null);
+
+  const fetchStores = useCallback(async () => {
+    setStoreLoading(true); setStoreError(null);
+    try {
+      const res = await fetch(`${STORES_URL}?_=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStoreData(await res.json());
+    } catch(e) { setStoreError(e.message); }
+    finally { setStoreLoading(false); }
+  }, []);
 
   const doFetch = useCallback(async () => {
     if (!tpKey) return;
@@ -1144,6 +1158,9 @@ function AnalyticsSection({ tpKey }) {
   }, [tpKey]);
 
   useEffect(() => { doFetch(); }, [doFetch]);
+  useEffect(() => {
+    if (platform === "appstore" || platform === "play") fetchStores();
+  }, [platform, fetchStores]);
 
   // ── derive display data ──────────────────────────────────
   const isLive = !!liveStats;
@@ -1183,8 +1200,8 @@ function AnalyticsSection({ tpKey }) {
   const starColors    = {5:"#22C55E",4:"#84CC16",3:"#EAB308",2:"#F97316",1:"#EF4444"};
   const platforms     = [
     { id:"trustpilot", label:"⭐ Trustpilot" },
-    { id:"appstore",   label:"🍎 App Store",  soon:true },
-    { id:"play",       label:"▶ Google Play", soon:true },
+    { id:"appstore",   label:"🍎 App Store" },
+    { id:"play",       label:"▶ Google Play" },
   ];
 
   // ── spike banner helpers ─────────────────────────────────
@@ -1203,18 +1220,26 @@ function AnalyticsSection({ tpKey }) {
           <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Analytics</h2>
           <div style={{fontSize:13,color:"#8B949E",marginTop:2,display:"flex",alignItems:"center",gap:6}}>
             <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",
-              background:loading?"#F59E0B":isLive?"#22C55E":"#F59E0B",flexShrink:0}}/>
-            {!tpKey  ? "Add Trustpilot key in 🔑 to go live — showing mock data"
-              : loading ? "Fetching live data…"
-              : fetchError ? "Showing mock data (fetch failed)"
-              : `Live · updated at ${fmtUpdated}`}
+              background:(platform==="trustpilot"?(loading?"#F59E0B":isLive?"#22C55E":"#F59E0B"):(storeLoading?"#F59E0B":storeData?"#22C55E":"#F59E0B")),flexShrink:0}}/>
+            {platform==="trustpilot"
+              ? (!tpKey ? "Add Trustpilot key in 🔑 to go live — showing mock data"
+                  : loading ? "Fetching live data…"
+                  : fetchError ? "Showing mock data (fetch failed)"
+                  : `Live · updated at ${fmtUpdated}`)
+              : storeLoading ? "Fetching from GitHub…"
+              : storeError ? `Error: ${storeError}`
+              : storeData ? `Synced by Apps Script · every 15 min`
+              : "Click Refresh to load"}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          {tpKey && <button onClick={doFetch} disabled={loading} style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:loading?"default":"pointer",fontFamily:"inherit",color:"#57606A",display:"flex",alignItems:"center",gap:5,opacity:loading?0.6:1}}>
-            <span style={{fontSize:13,display:"inline-block",animation:loading?"spin 1s linear infinite":"none"}}>🔄</span>
-            {loading?"Refreshing…":"Refresh"}
-          </button>}
+          {(tpKey || platform !== "trustpilot") && (
+            <button onClick={platform==="trustpilot"?doFetch:fetchStores} disabled={loading||storeLoading}
+              style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:(loading||storeLoading)?"default":"pointer",fontFamily:"inherit",color:"#57606A",display:"flex",alignItems:"center",gap:5,opacity:(loading||storeLoading)?0.6:1}}>
+              <span style={{fontSize:13,display:"inline-block",animation:(loading||storeLoading)?"spin 1s linear infinite":"none"}}>🔄</span>
+              {(loading||storeLoading)?"Refreshing…":"Refresh"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -1238,102 +1263,188 @@ function AnalyticsSection({ tpKey }) {
         ))}
       </div>
 
-      {/* Spike / sentiment alert */}
-      {spike && (
-        <div style={{background:spikeIsHigh?"#FEF2F2":"#FFFBEB",border:`1px solid ${spikeIsHigh?"#FECACA":"#FDE68A"}`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20,flexShrink:0}}>{spikeIsHigh?"🔴":"🟡"}</span>
-          <div>
-            <div style={{fontSize:13,fontWeight:600,color:spikeIsHigh?"#991B1B":"#92400E"}}>
-              {spike.type==="sentiment" ? "Sentiment drop detected" : spikeIsHigh ? "Volume spike" : "Elevated volume"}
+      {/* ── Trustpilot content ── */}
+      {platform === "trustpilot" && (<>
+
+        {/* Spike / sentiment alert */}
+        {spike && (
+          <div style={{background:spikeIsHigh?"#FEF2F2":"#FFFBEB",border:`1px solid ${spikeIsHigh?"#FECACA":"#FDE68A"}`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:20,flexShrink:0}}>{spikeIsHigh?"🔴":"🟡"}</span>
+            <div>
+              <div style={{fontSize:13,fontWeight:600,color:spikeIsHigh?"#991B1B":"#92400E"}}>
+                {spike.type==="sentiment" ? "Sentiment drop detected" : spikeIsHigh ? "Volume spike" : "Elevated volume"}
+              </div>
+              <div style={{fontSize:12,color:spikeIsHigh?"#DC2626":"#B45309",marginTop:1}}>{spikeMsg}</div>
             </div>
-            <div style={{fontSize:12,color:spikeIsHigh?"#DC2626":"#B45309",marginTop:1}}>{spikeMsg}</div>
+          </div>
+        )}
+
+        {/* KPI cards */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+          {[
+            { label:"TrustScore",    value:stats.trustScore,                                   sub:"out of 5.0" },
+            { label:"Total reviews", value:(stats.total||0).toLocaleString(),                   sub:"all time" },
+            { label:"Today",         value:stats.today,                                         sub:"reviews so far" },
+            { label:"7-day avg ★",   value:stats.weekAvgRating?(stats.weekAvgRating.toFixed(2)+"★"):"—",
+              sub: stats.weekAvgRating ? `${ratingTrendUp?"↑":"↓"} ${Math.abs(ratingDelta).toFixed(2)} vs prev week` : `${stats.weekCount||0} reviews this week`,
+              subColor: stats.weekAvgRating ? (ratingTrendUp?"#22C55E":"#EF4444") : undefined },
+          ].map(card => (
+            <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
+              <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
+              <div style={{fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1}}>{card.value}</div>
+              <div style={{fontSize:12,color:card.subColor||"#8B949E",marginTop:5}}>{card.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts row */}
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,marginBottom:12}}>
+          <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Review volume</div>
+              <div style={{display:"flex",gap:3}}>
+                {["24h","7d","30d"].map(r => (
+                  <button key={r} onClick={()=>setRange(r)} style={{padding:"3px 10px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid",borderColor:range===r?"#00B67A":"#D0D7DE",background:range===r?"#F0FDF9":"#FFF",color:range===r?"#059669":"#57606A"}}>{r}</button>
+                ))}
+              </div>
+            </div>
+            <BarChart data={chartData} color="#00B67A" height={96}/>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:10,color:"#C0C0C0"}}>
+              <span>{chartData[0]?.label}</span>
+              <span>{chartData[Math.floor(chartData.length/2)]?.label}</span>
+              <span>{chartData[chartData.length-1]?.label}</span>
+            </div>
+            {isLive && range!=="24h" && snaps.length<2 && (
+              <div style={{fontSize:11,color:"#8B949E",marginTop:8,textAlign:"center"}}>📈 7d/30d charts fill in over time as the app collects daily snapshots</div>
+            )}
+          </div>
+
+          <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
+            <div style={{fontSize:13,fontWeight:600,color:"#1F2328",marginBottom:14}}>Star distribution</div>
+            {[5,4,3,2,1].map(s => {
+              const pct = total5>0 ? (stats.dist[s]/total5)*100 : 0;
+              return (
+                <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+                  <span style={{fontSize:11,color:"#57606A",width:16,textAlign:"right",flexShrink:0}}>{s}★</span>
+                  <div style={{flex:1,background:"#F3F4F6",borderRadius:4,height:8,overflow:"hidden"}}>
+                    <div style={{width:`${pct}%`,background:starColors[s],height:"100%",borderRadius:4,transition:"width 0.4s"}}/>
+                  </div>
+                  <span style={{fontSize:10,color:"#8B949E",width:34,textAlign:"right",flexShrink:0}}>{pct.toFixed(1)}%</span>
+                </div>
+              );
+            })}
+            <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #F3F4F6",fontSize:12,color:"#8B949E",textAlign:"center"}}>{total5.toLocaleString()} total</div>
           </div>
         </div>
-      )}
 
-      {/* KPI cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-        {[
-          { label:"TrustScore",    value:stats.trustScore,                                   sub:"out of 5.0" },
-          { label:"Total reviews", value:(stats.total||0).toLocaleString(),                   sub:"all time" },
-          { label:"Today",         value:stats.today,                                         sub:"reviews so far" },
-          { label:"7-day avg ★",   value:stats.weekAvgRating?(stats.weekAvgRating.toFixed(2)+"★"):"—",
-            sub: stats.weekAvgRating ? `${ratingTrendUp?"↑":"↓"} ${Math.abs(ratingDelta).toFixed(2)} vs prev week` : `${stats.weekCount||0} reviews this week`,
-            subColor: stats.weekAvgRating ? (ratingTrendUp?"#22C55E":"#EF4444") : undefined },
-        ].map(card => (
-          <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
-            <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
-            <div style={{fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1}}>{card.value}</div>
-            <div style={{fontSize:12,color:card.subColor||"#8B949E",marginTop:5}}>{card.sub}</div>
+        {/* Recent reviews */}
+        <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
+          <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
+            <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
           </div>
-        ))}
-      </div>
+          {loading && !liveReviews && (
+            <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
+          )}
+          {displayReviews.map((r,i) => (
+            <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayReviews.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
+                  <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
+                  <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+                  {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
+                  {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
+                </div>
+                <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
+              </div>
+              <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
+            </div>
+          ))}
+        </div>
+      </>)}
 
-      {/* Charts row */}
-      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,marginBottom:12}}>
-        <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Review volume</div>
-            <div style={{display:"flex",gap:3}}>
-              {["24h","7d","30d"].map(r => (
-                <button key={r} onClick={()=>setRange(r)} style={{padding:"3px 10px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid",borderColor:range===r?"#00B67A":"#D0D7DE",background:range===r?"#F0FDF9":"#FFF",color:range===r?"#059669":"#57606A"}}>{r}</button>
+      {/* ── App Store / Google Play content ── */}
+      {(platform === "appstore" || platform === "play") && (() => {
+        const isPlay = platform === "play";
+        const key = isPlay ? "googlePlay" : "appStore";
+        const pd = storeData?.[key];
+        const reviews = pd?.recentReviews || [];
+        const needsReply = reviews.filter(r => !r.replied && r.stars <= 2).length;
+        const lastUpdated = pd?.updatedAt
+          ? new Date(pd.updatedAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+          : "—";
+        const kpis = isPlay
+          ? [
+              { label:"Avg rating",     value: pd?.stats?.avgRating ? `${parseFloat(pd.stats.avgRating).toFixed(2)}★` : "—", sub:"recent reviews" },
+              { label:"Recent reviews", value: pd?.stats?.fetchedCount ?? "—", sub:"fetched this cycle" },
+              { label:"Needs reply",    value: needsReply, sub:"≤2★ unanswered" },
+              { label:"Last sync",      value: lastUpdated, sub:"Apps Script pipeline" },
+            ]
+          : [
+              { label:"Overall rating", value: pd?.stats?.rating ? `${pd.stats.rating.toFixed(2)}★` : "—", sub:"App Store score" },
+              { label:"Total ratings",  value: pd?.stats?.ratingCount ? pd.stats.ratingCount.toLocaleString() : "—", sub:"all time" },
+              { label:"App version",    value: pd?.stats?.version ?? "—", sub:"current" },
+              { label:"Last sync",      value: lastUpdated, sub:"Apps Script pipeline" },
+            ];
+        const displayRevs = reviews.slice(0,10).map(r => ({
+          id: r.id, stars: r.stars, author: r.author, title: r.title||"",
+          text: r.text, replied: r.replied,
+          time: new Date(r.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
+        }));
+        if (storeLoading) return (
+          <div style={{padding:"56px",textAlign:"center",color:"#8B949E",fontSize:13}}>
+            <div style={{fontSize:28,marginBottom:12}}>⏳</div>
+            Loading {isPlay?"Google Play":"App Store"} data…
+          </div>
+        );
+        if (storeError) return (
+          <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"14px 16px",fontSize:13,color:"#DC2626"}}>⚠️ {storeError}</div>
+        );
+        if (!storeData) return (
+          <div style={{padding:"56px",textAlign:"center",color:"#8B949E",fontSize:13}}>
+            <div style={{fontSize:28,marginBottom:12}}>📡</div>
+            Click Refresh to load data from GitHub.
+          </div>
+        );
+        return (
+          <div>
+            {/* KPI cards */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+              {kpis.map(card => (
+                <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
+                  <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
+                  <div style={{fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1}}>{card.value}</div>
+                  <div style={{fontSize:12,color:"#8B949E",marginTop:5}}>{card.sub}</div>
+                </div>
+              ))}
+            </div>
+            {/* Recent reviews */}
+            <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
+              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
+                <span style={{fontSize:12,color:"#8B949E"}}>Synced every 15 min · most recent first</span>
+              </div>
+              {displayRevs.length===0 && <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>No reviews available</div>}
+              {displayRevs.map((r,i) => (
+                <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayRevs.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
+                  <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
+                      <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
+                      {r.title && <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>}
+                      {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
+                      {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
+                    </div>
+                    <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
+                  </div>
+                  <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
+                </div>
               ))}
             </div>
           </div>
-          <BarChart data={chartData} color="#00B67A" height={96}/>
-          <div style={{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:10,color:"#C0C0C0"}}>
-            <span>{chartData[0]?.label}</span>
-            <span>{chartData[Math.floor(chartData.length/2)]?.label}</span>
-            <span>{chartData[chartData.length-1]?.label}</span>
-          </div>
-          {isLive && range!=="24h" && snaps.length<2 && (
-            <div style={{fontSize:11,color:"#8B949E",marginTop:8,textAlign:"center"}}>📈 7d/30d charts fill in over time as the app collects daily snapshots</div>
-          )}
-        </div>
-
-        <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1F2328",marginBottom:14}}>Star distribution</div>
-          {[5,4,3,2,1].map(s => {
-            const pct = total5>0 ? (stats.dist[s]/total5)*100 : 0;
-            return (
-              <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
-                <span style={{fontSize:11,color:"#57606A",width:16,textAlign:"right",flexShrink:0}}>{s}★</span>
-                <div style={{flex:1,background:"#F3F4F6",borderRadius:4,height:8,overflow:"hidden"}}>
-                  <div style={{width:`${pct}%`,background:starColors[s],height:"100%",borderRadius:4,transition:"width 0.4s"}}/>
-                </div>
-                <span style={{fontSize:10,color:"#8B949E",width:34,textAlign:"right",flexShrink:0}}>{pct.toFixed(1)}%</span>
-              </div>
-            );
-          })}
-          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #F3F4F6",fontSize:12,color:"#8B949E",textAlign:"center"}}>{total5.toLocaleString()} total</div>
-        </div>
-      </div>
-
-      {/* Recent reviews */}
-      <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
-        <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-          <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
-        </div>
-        {loading && !liveReviews && (
-          <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
-        )}
-        {displayReviews.map((r,i) => (
-          <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayReviews.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
-            <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
-                <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
-                <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
-                {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
-                {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
-              </div>
-              <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
-            </div>
-            <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
-          </div>
-        ))}
-      </div>
+        );
+      })()}
     </div>
   );
 }
