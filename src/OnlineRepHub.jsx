@@ -927,6 +927,7 @@ function ScheduleSection({ ghPat }) {
             <div style={{flex:1,minWidth:200}}><SchedGapWarnings schedule={schedule}/></div>
           </div>
           <SchedOffSummary schedule={schedule}/>
+          <SchedHOSummary schedule={schedule}/>
           <SchedGrid schedule={schedule} setSchedule={handleScheduleUpdate}/>
         </div>
       ) : (
@@ -1089,6 +1090,41 @@ function SchedOffSummary({ schedule }) {
             {Object.entries(days).map(([reason,count])=>{const info=OFF_REASONS.find(r=>r.value===reason);return<span key={reason} style={{fontSize:11,padding:"2px 8px",borderRadius:6,fontWeight:500,background:info?info.bg:"#f1f5f9",color:info?info.fg:"#64748b",border:`1px solid ${info?info.border:"#e2e8f0"}`}}>{info?info.label.split(" ")[0]:""} {reason}: {count}d</span>;})}
           </div>
         </div>;
+      })}
+    </div>
+  );
+}
+
+function SchedHOSummary({ schedule }) {
+  const hoByMember = {};
+  TEAM.forEach(m => { hoByMember[m.name] = []; });
+  schedule.forEach(week => {
+    TEAM.forEach((m, mi) => {
+      week.days.forEach((date, di) => {
+        if (date && (week.homeOffice || [])[mi]?.[di]) hoByMember[m.name].push(date);
+      });
+    });
+  });
+  if (!TEAM.some(m => hoByMember[m.name].length > 0)) return null;
+  return (
+    <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14,marginBottom:16}}>
+      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",color:"#94a3b8",fontWeight:700,marginBottom:10}}>Home Office Dates</div>
+      {TEAM.map(m => {
+        const dates = hoByMember[m.name];
+        return (
+          <div key={m.name} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+            <span style={{fontSize:12,fontWeight:600,color:"#1e293b",minWidth:80}}>{m.name.split(" ")[0]}</span>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+              {dates.length > 0
+                ? dates.map((d,i) => (
+                    <span key={i} style={{fontSize:11,padding:"2px 8px",borderRadius:6,fontWeight:500,background:"#e0f2fe",color:"#075985",border:"1px solid #bae6fd"}}>
+                      {d.getDate()}/{d.getMonth()+1}
+                    </span>
+                  ))
+                : <span style={{fontSize:11,color:"#cbd5e1"}}>—</span>}
+            </div>
+          </div>
+        );
       })}
     </div>
   );
