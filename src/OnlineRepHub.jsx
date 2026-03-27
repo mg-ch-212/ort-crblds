@@ -1261,11 +1261,13 @@ function ResourcesSection() {
   ];
 
   const tools = [
-    { label:"Falcon",                      url:"https://app.falcon.io/#/engage/overview",                              domain:"falcon.io" },
+    { label:"Brandwatch",                  url:"https://app.falcon.io/#/engage/overview",                              domain:"brandwatch.com" },
+    { label:"Post Preview",                url:"https://app.falcon.io/#/publish/new/facebook",                         domain:"falcon.io" },
     { label:"Amplitude",                   url:"https://app.amplitude.com/analytics/trading212/home",                  domain:"amplitude.com" },
-    { label:"Social Moderation",            url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
+    { label:"Social Moderation",           url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
     { label:"Marqeta",                     url:"https://app.marqeta.com",                                               domain:"marqeta.com" },
     { label:"Zendesk",                     url:"https://trading2129704.zendesk.com/agent/search/1",                     domain:"zendesk.com" },
+    { label:"Meta Business Suite",         url:"https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=874174999312139&mio=0&asset_id=440091156053861", domain:"facebook.com" },
   ];
 
   const sheets = [
@@ -1282,18 +1284,21 @@ function ResourcesSection() {
   ];
 
   const socials = [
-    { label:"Trustpilot",          url:"https://businessapp.b2b.trustpilot.com/reviews",                                                                                                           domain:"trustpilot.com" },
-    { label:"X / Twitter",         url:"https://twitter.com/home",                                                                                                                                 domain:"twitter.com" },
-    { label:"Instagram",           url:"https://www.instagram.com/",                                                                                                                               domain:"instagram.com" },
-    { label:"Meta Business Suite", url:"https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=874174999312139&mio=0&asset_id=440091156053861",                            domain:"facebook.com" },
-    { label:"LinkedIn",            url:"https://www.linkedin.com/feed/",                                                                                                                           domain:"linkedin.com" },
-    { label:"YouTube",             url:"https://www.youtube.com/",                                                                                                                                 domain:"youtube.com" },
+    // Row 1
     { label:"Reddit",              url:"https://www.reddit.com/r/trading212/new/",                                                                                                                 domain:"reddit.com" },
-    { label:"Google Maps",         url:"https://www.google.com/maps",                                                                                                                              domain:"google.com" },
+    { label:"X / Twitter",         url:"https://twitter.com/home",                                                                                                                                 domain:"twitter.com" },
+    { label:"Community Forum",     url:"https://community.trading212.com/",                                                                                                                         domain:"trading212.com" },
+    { label:"LinkedIn",            url:"https://www.linkedin.com/feed/",                                                                                                                           domain:"linkedin.com" },
+    // Row 2
+    { label:"Instagram",           url:"https://www.instagram.com/",                                                                                                                               domain:"instagram.com" },
+    { label:"Facebook",            url:"https://www.facebook.com/",                                                                                                                                domain:"facebook.com" },
+    { label:"YouTube",             url:"https://www.youtube.com/",                                                                                                                                 domain:"youtube.com" },
     { label:"Glassdoor",           url:"https://www.glassdoor.com/Overview/Working-at-Trading-212-EI_IE1671489.11,22.htm",                                                                         domain:"glassdoor.com" },
+    // Row 3
+    { label:"Trustpilot",          url:"https://businessapp.b2b.trustpilot.com/reviews",                                                                                                           domain:"trustpilot.com" },
     { label:"App Store Connect",   url:"https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/ng/app/566325832/ios/ratingsResponses",                                                   domain:"apple.com" },
     { label:"Google Play Console", url:"https://play.google.com/console/u/0/developers/5000184188293498537/app/4974459231864602677/user-feedback/reviews",                                          domain:"google.com" },
-    { label:"Community Forum",     url:"https://community.trading212.com/",                                                                                                                         domain:"trading212.com" },
+    { label:"Google Maps",         url:"https://www.google.com/maps",                                                                                                                              domain:"google.com" },
   ];
 
   const sectionLabel = (text) => (
@@ -1355,7 +1360,7 @@ function ResourcesSection() {
           <span style={{fontSize:12,color:"#8B949E",transition:"transform 0.2s",display:"inline-block",transform:socialsOpen?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
         </button>
         {socialsOpen && (
-          <div style={{padding:"0 12px 12px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8}}>
+          <div style={{padding:"0 12px 12px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
             {socials.map(l => linkCard(l))}
           </div>
         )}
