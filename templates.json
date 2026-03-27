@@ -1552,11 +1552,12 @@
         "Google Play",
         "App Store"
       ],
-      "text": "testt",
+      "text": "testt testt 2",
       "notes": "test",
       "author": "Veselin Valkov",
-      "status": "approved",
-      "dateAdded": "26/03/2026"
+      "status": "draft",
+      "dateAdded": "26/03/2026",
+      "editedAt": "27/03/2026"
     }
   ]
 }
