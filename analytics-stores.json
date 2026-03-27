@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T13:35:36.766Z",
+  "updatedAt": "2026-03-27T13:50:42.352Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T13:35:36.132Z",
+    "updatedAt": "2026-03-27T13:50:41.557Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -666,26 +666,18 @@
         "text": "\tBest trading platform around.",
         "createdAt": "2026-03-20T15:05:04.000Z",
         "replied": false
-      },
-      {
-        "id": "9988ee3a-9930-4dff-9b68-5bc52411ae2e",
-        "stars": 5,
-        "author": "Glenroy mccalla",
-        "text": "\texcellent easy to use",
-        "createdAt": "2026-03-20T13:38:33.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 84,
-      "avgRating": "3.88"
+      "fetchedCount": 83,
+      "avgRating": "3.87"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T13:35:36.766Z",
+    "updatedAt": "2026-03-27T13:50:42.352Z",
     "stats": {
-      "rating": 4.67849,
-      "ratingCount": 346011,
+      "rating": 4.67845,
+      "ratingCount": 345955,
       "version": "8.23.0"
     },
     "recentReviews": [
