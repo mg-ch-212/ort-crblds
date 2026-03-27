@@ -1248,40 +1248,51 @@ function ResourcesSection() {
   const favicon = domain => `https://www.google.com/s2/favicons?sz=32&domain=${domain}`;
 
   const quickLinks = [
-    { label:"Gmail",      url:"https://mail.google.com",                                  emoji:"✉️" },
-    { label:"hiBob",      url:"https://app.hibob.com/home",                               emoji:"👤" },
-    { label:"Backoffice", url:"https://backoffice.live.trading212.avus.io/customercare",   emoji:"🏢" },
-    { label:"ChatGPT",    url:"https://chatgpt.com",                                       emoji:"🤖" },
-    { label:"Claude",     url:"https://claude.ai",                                         emoji:"✨" },
+    { label:"Gmail",        url:"https://mail.google.com",                                                emoji:"✉️" },
+    { label:"hiBob",        url:"https://app.hibob.com/home",                                             emoji:"👤" },
+    { label:"Backoffice",   url:"https://backoffice.live.trading212.avus.io/customercare",                 emoji:"🏢" },
+    { label:"Help Centre",  url:"https://helpcentre.trading212.com/hc/en-us",                             domain:"trading212.com" },
+    { label:"T212 Learn",   url:"https://www.trading212.com/learn",                                       domain:"trading212.com" },
+    { label:"ChatGPT",      url:"https://chatgpt.com",                                                    emoji:"🤖" },
+    { label:"Claude",       url:"https://claude.ai",                                                      emoji:"✨" },
+    { label:"Gemini",       url:"https://gemini.google.com",                                              domain:"google.com" },
+    { label:"Perplexity",   url:"https://www.perplexity.ai/",                                             domain:"perplexity.ai" },
+    { label:"Exchanges",    url:"https://www.interactivebrokers.ie/en/trading/products-exchanges.php#/",  domain:"interactivebrokers.ie" },
   ];
 
   const tools = [
-    { label:"Falcon",    url:"https://app.falcon.io/#/engage/overview",                     domain:"falcon.io" },
-    { label:"Amplitude", url:"https://app.amplitude.com/analytics/trading212/home",         domain:"amplitude.com" },
+    { label:"Falcon",                      url:"https://app.falcon.io/#/engage/overview",                              domain:"falcon.io" },
+    { label:"Amplitude",                   url:"https://app.amplitude.com/analytics/trading212/home",                  domain:"amplitude.com" },
+    { label:"Social Moderation Dashboard", url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
+    { label:"Marqeta",                     url:"https://app.marqeta.com",                                               domain:"marqeta.com" },
   ];
 
   const sheets = [
-    { label:"Stats",       url:"https://docs.google.com/spreadsheets/d/1giEdcUX2sphS1P8ieJB5E0o7I0pkW5sa2bxo3wQFsbM/edit?gid=1837238448#gid=1837238448", domain:"docs.google.com" },
-    { label:"Post Sizing", url:"https://docs.google.com/spreadsheets/d/1HNRtj5IfU_gV3ALgUvz2rJ-7_E5jsQfqwvbdDxAsCQc/edit",                                 domain:"docs.google.com" },
+    { label:"Stats",            url:"https://docs.google.com/spreadsheets/d/1giEdcUX2sphS1P8ieJB5E0o7I0pkW5sa2bxo3wQFsbM/edit?gid=1837238448#gid=1837238448", domain:"docs.google.com" },
+    { label:"Post Sizing",      url:"https://docs.google.com/spreadsheets/d/1HNRtj5IfU_gV3ALgUvz2rJ-7_E5jsQfqwvbdDxAsCQc/edit",                                 domain:"docs.google.com" },
+    { label:"212 Social Bans",  url:"https://docs.google.com/spreadsheets/d/1OaKDt7AmqXzabcp02hFHTLZfQiOlBjjfBOjtatuXH4Y/edit?gid=1697261709#gid=1697261709",   domain:"docs.google.com" },
   ];
 
   const jira = [
-    { label:"Online Rep Board",        url:"https://trading212.atlassian.net/jira/software/c/projects/OR/boards/271",  domain:"atlassian.net" },
-    { label:"Fin Promotions Board",    url:"https://trading212.atlassian.net/jira/software/c/projects/FP/boards/216",  domain:"atlassian.net" },
-    { label:"Confluence Wiki",         url:"https://trading212.atlassian.net/wiki/spaces/GCRR/overview?homepageId=11239712", domain:"atlassian.net" },
+    { label:"Online Rep Board",      url:"https://trading212.atlassian.net/jira/software/c/projects/OR/boards/271",          domain:"atlassian.net" },
+    { label:"Fin Promotions Board",  url:"https://trading212.atlassian.net/jira/software/c/projects/FP/boards/216",          domain:"atlassian.net" },
+    { label:"Confluence Wiki",       url:"https://trading212.atlassian.net/wiki/spaces/GCRR/overview?homepageId=11239712",   domain:"atlassian.net" },
+    { label:"Creative Design Form",  url:"https://trading212.atlassian.net/jira/software/c/projects/CREATE/form/142",        domain:"atlassian.net" },
   ];
 
   const socials = [
-    { label:"Trustpilot",          url:"https://businessapp.b2b.trustpilot.com/reviews",                                                                                                          domain:"trustpilot.com" },
-    { label:"X / Twitter",         url:"https://twitter.com/home",                                                                                                                                domain:"twitter.com" },
-    { label:"Instagram",           url:"https://www.instagram.com/",                                                                                                                              domain:"instagram.com" },
-    { label:"Meta Business Suite", url:"https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=874174999312139&mio=0&asset_id=440091156053861",                           domain:"facebook.com" },
-    { label:"LinkedIn",            url:"https://www.linkedin.com/feed/",                                                                                                                          domain:"linkedin.com" },
-    { label:"YouTube",             url:"https://www.youtube.com/",                                                                                                                                domain:"youtube.com" },
-    { label:"Reddit",              url:"https://www.reddit.com/r/trading212/new/",                                                                                                                domain:"reddit.com" },
-    { label:"App Store Connect",   url:"https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/ng/app/566325832/ios/ratingsResponses",                                                  domain:"apple.com" },
-    { label:"Google Play Console", url:"https://play.google.com/console/u/0/developers/5000184188293498537/app/4974459231864602677/user-feedback/reviews",                                         domain:"google.com" },
-    { label:"Community Forum",     url:"https://community.trading212.com/",                                                                                                                        domain:"trading212.com" },
+    { label:"Trustpilot",          url:"https://businessapp.b2b.trustpilot.com/reviews",                                                                                                           domain:"trustpilot.com" },
+    { label:"X / Twitter",         url:"https://twitter.com/home",                                                                                                                                 domain:"twitter.com" },
+    { label:"Instagram",           url:"https://www.instagram.com/",                                                                                                                               domain:"instagram.com" },
+    { label:"Meta Business Suite", url:"https://business.facebook.com/latest/home?nav_ref=bm_home_redirect&business_id=874174999312139&mio=0&asset_id=440091156053861",                            domain:"facebook.com" },
+    { label:"LinkedIn",            url:"https://www.linkedin.com/feed/",                                                                                                                           domain:"linkedin.com" },
+    { label:"YouTube",             url:"https://www.youtube.com/",                                                                                                                                 domain:"youtube.com" },
+    { label:"Reddit",              url:"https://www.reddit.com/r/trading212/new/",                                                                                                                 domain:"reddit.com" },
+    { label:"Google Maps",         url:"https://www.google.com/maps",                                                                                                                              domain:"google.com" },
+    { label:"Glassdoor",           url:"https://www.glassdoor.com/Overview/Working-at-Trading-212-EI_IE1671489.11,22.htm",                                                                         domain:"glassdoor.com" },
+    { label:"App Store Connect",   url:"https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/ng/app/566325832/ios/ratingsResponses",                                                   domain:"apple.com" },
+    { label:"Google Play Console", url:"https://play.google.com/console/u/0/developers/5000184188293498537/app/4974459231864602677/user-feedback/reviews",                                          domain:"google.com" },
+    { label:"Community Forum",     url:"https://community.trading212.com/",                                                                                                                         domain:"trading212.com" },
   ];
 
   const sectionLabel = (text) => (
