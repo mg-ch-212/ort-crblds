@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T14:50:39.529Z",
+  "updatedAt": "2026-03-27T15:06:58.617Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T14:50:38.916Z",
+    "updatedAt": "2026-03-27T15:06:53.383Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -658,23 +658,15 @@
         "text": "\tgood app",
         "createdAt": "2026-03-20T17:33:02.000Z",
         "replied": false
-      },
-      {
-        "id": "951406f6-e9d0-4db2-b4ae-f2dcdfb21c98",
-        "stars": 4,
-        "author": "Zain Abid",
-        "text": "\tBest trading platform around.",
-        "createdAt": "2026-03-20T15:05:04.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 83,
+      "fetchedCount": 82,
       "avgRating": "3.87"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T14:50:39.529Z",
+    "updatedAt": "2026-03-27T15:06:58.617Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
