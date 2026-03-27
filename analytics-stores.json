@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T19:35:40.382Z",
+  "updatedAt": "2026-03-27T19:50:37.682Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T19:35:39.048Z",
+    "updatedAt": "2026-03-27T19:50:36.693Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -626,23 +626,15 @@
         "text": "\talthough it says you can withdraw up to ?400/$ without commissions, you are wrong, for ?378 I was charged the estimated amount of ?45, I contacted them and they do absolutely nothing, THEY DON'T WANT TO CONTACT THE BANK , pur si simplu nu fac nimic, deci, After they stole my money, they closed my account, be careful with them or you will run out of money",
         "createdAt": "2026-03-20T22:41:57.000Z",
         "replied": true
-      },
-      {
-        "id": "775f9372-86c3-42d9-8966-6c7b2e7ac680",
-        "stars": 5,
-        "author": "Eman",
-        "text": "\tno problems so far",
-        "createdAt": "2026-03-20T19:40:51.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 79,
-      "avgRating": "3.91"
+      "fetchedCount": 78,
+      "avgRating": "3.90"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T19:35:40.382Z",
+    "updatedAt": "2026-03-27T19:50:37.682Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
