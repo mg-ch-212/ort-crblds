@@ -8,7 +8,7 @@ const REPO_NAME  = "ort-crblds";
 const FILE_PATH  = "templates.json";
 const RAW_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-const APP_PIN    = 'B8=j.ML"9Vo`m)i8oYI"30PR';
+const APP_PIN    = "8XGc-DyH4eRzG5oj7h-Y3C0T";
 
 // ═══════════════════════════════════════════════
 //  SCHEDULE CONSTANTS
