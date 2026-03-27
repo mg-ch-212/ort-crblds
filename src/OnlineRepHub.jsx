@@ -120,6 +120,42 @@ const PLATFORM_COLORS = {
 };
 
 // ═══════════════════════════════════════════════
+//  ANALYTICS MOCK DATA
+// ═══════════════════════════════════════════════
+const MOCK_TP_STATS = {
+  trustScore:4.6, stars:4.5, total:83251, today:35, week:361,
+  weekAvgRating:4.62, prevWeekAvgRating:4.58,
+  dist:{ 5:65732, 4:9102, 3:2768, 2:1216, 1:4433 },
+};
+const MOCK_TP_24H = [
+  {h:0,n:2},{h:1,n:1},{h:2,n:3},{h:3,n:0},{h:4,n:1},{h:5,n:0},
+  {h:6,n:1},{h:7,n:2},{h:8,n:5},{h:9,n:8},{h:10,n:12},{h:11,n:0},
+  {h:12,n:0},{h:13,n:0},{h:14,n:0},{h:15,n:0},{h:16,n:0},{h:17,n:0},
+  {h:18,n:0},{h:19,n:0},{h:20,n:0},{h:21,n:0},{h:22,n:0},{h:23,n:0},
+];
+const MOCK_TP_7D = [
+  {label:"Mon 21",n:52},{label:"Tue 22",n:61},{label:"Wed 23",n:48},
+  {label:"Thu 24",n:55},{label:"Fri 25",n:67},{label:"Sat 26",n:43},{label:"Today",n:35},
+];
+const MOCK_TP_30D = [
+  {label:"Mar 1",n:44},{label:"Mar 2",n:51},{label:"Mar 3",n:38},{label:"Mar 4",n:29},{label:"Mar 5",n:57},
+  {label:"Mar 6",n:62},{label:"Mar 7",n:48},{label:"Mar 8",n:53},{label:"Mar 9",n:41},{label:"Mar 10",n:66},
+  {label:"Mar 11",n:39},{label:"Mar 12",n:55},{label:"Mar 13",n:47},{label:"Mar 14",n:60},{label:"Mar 15",n:43},
+  {label:"Mar 16",n:58},{label:"Mar 17",n:72},{label:"Mar 18",n:49},{label:"Mar 19",n:44},{label:"Mar 20",n:61},
+  {label:"Mar 21",n:52},{label:"Mar 22",n:61},{label:"Mar 23",n:48},{label:"Mar 24",n:55},{label:"Mar 25",n:67},
+  {label:"Mar 26",n:43},{label:"Today",n:35},
+];
+const MOCK_TP_REVIEWS = [
+  {id:"r1",stars:5,author:"Glenys",title:"Excellent app",text:"Excellent app can check balance very easily",time:"10:18 AM",replied:false},
+  {id:"r2",stars:5,author:"Mr. John Clarke",title:"Great website",text:"Great website, easy to use",time:"10:16 AM",replied:false},
+  {id:"r3",stars:5,author:"Christian Sylvester Backa",title:"Easy to use and very simple",text:"Easy to use and very simple. There aren't any complicated layouts.",time:"10:12 AM",replied:false},
+  {id:"r4",stars:1,author:"Poacher",title:"Well I cashed out gold for £156…",text:"Well I cashed out gold for £156 and didn't go to my account. So I am 156 pounds out of pocket.",time:"08:09 AM",replied:true},
+  {id:"r5",stars:2,author:"Paul Clark",title:"I find it difficult to set up monthly deposits",text:"I find it difficult to set up monthly deposit and moving money around",time:"01:33 AM",replied:false},
+];
+// Hour 10 has 12 reviews vs ~4.5 baseline → 2.7× → ELEVATED (demo)
+const MOCK_SPIKE = { level:"elevated", message:"2.7× more reviews than usual for 10:00–11:00 AM (12 vs ~4.5 avg)" };
+
+// ═══════════════════════════════════════════════
 //  GITHUB API HELPERS
 // ═══════════════════════════════════════════════
 async function getFileAndSha(pat) {
@@ -549,13 +585,7 @@ export default function SocialMediaHub() {
           {activeSection==="schedule" && <ScheduleSection />}
 
           {/* ══ ANALYTICS SECTION ══ */}
-          {activeSection==="analytics" && (
-            <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
-              <div style={{fontSize:40,marginBottom:16}}>📊</div>
-              <div style={{fontSize:17,fontWeight:700,color:"#1F2328",marginBottom:8}}>Analytics</div>
-              <div style={{fontSize:13,color:"#8B949E",maxWidth:380,margin:"0 auto",lineHeight:1.6}}>Trustpilot, App Store, Google Play, Google Maps and social media performance — coming soon.</div>
-            </div>
-          )}
+          {activeSection==="analytics" && <AnalyticsSection tpKey={tpKey} />}
 
           {/* ══ TEAM PERFORMANCE SECTION ══ */}
           {activeSection==="performance" && (
@@ -980,6 +1010,214 @@ function SchedExportXLSX({ schedule, monthLabel }) {
 function SchedToast({ message, onDone }) {
   useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t);},[onDone]);
   return <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#0f172a",color:"#fff",padding:"10px 20px",borderRadius:10,fontSize:13,fontWeight:500,zIndex:10000,boxShadow:"0 8px 24px rgba(0,0,0,0.18)",fontFamily:"'DM Sans',sans-serif"}}>{message}</div>;
+}
+
+// ═══════════════════════════════════════════════
+//  ANALYTICS — HELPERS + SECTION
+// ═══════════════════════════════════════════════
+function StarRating({ stars, size=12 }) {
+  const full = Math.round(stars);
+  return (
+    <span style={{color:"#F59E0B",fontSize:size,letterSpacing:1,lineHeight:1}}>
+      {"★".repeat(full)}{"☆".repeat(5-full)}
+    </span>
+  );
+}
+
+function BarChart({ data, valueKey="n", color="#00B67A", height=96 }) {
+  const max = Math.max(...data.map(d=>d[valueKey]), 1);
+  return (
+    <div style={{display:"flex",alignItems:"flex-end",gap:2,height,width:"100%"}}>
+      {data.map((d,i) => {
+        const pct = (d[valueKey]/max)*100;
+        return (
+          <div key={i} style={{flex:1,height:"100%",display:"flex",alignItems:"flex-end"}}>
+            <div
+              title={`${d.label||`${d.h}:00`} · ${d[valueKey]} review${d[valueKey]!==1?"s":""}`}
+              style={{width:"100%",background:d[valueKey]>0?color:"#F3F4F6",borderRadius:"2px 2px 0 0",
+                height:`${Math.max(pct, d[valueKey]>0?3:0)}%`,transition:"height 0.3s",cursor:"default"}}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AnalyticsSection({ tpKey }) {
+  const [platform, setPlatform] = useState("trustpilot");
+  const [range,    setRange]    = useState("24h");
+
+  const chartData = range==="24h" ? MOCK_TP_24H.map(d=>({...d,label:`${d.h}:00`}))
+    : range==="7d"  ? MOCK_TP_7D
+    : MOCK_TP_30D;
+
+  const stats     = MOCK_TP_STATS;
+  const spike     = MOCK_SPIKE;
+  const total5    = Object.values(stats.dist).reduce((a,b)=>a+b,0);
+  const isMock    = !tpKey; // once live data is wired, this flips
+
+  const ratingDelta   = stats.weekAvgRating - stats.prevWeekAvgRating;
+  const ratingTrendUp = ratingDelta >= 0;
+
+  const platforms = [
+    { id:"trustpilot", label:"⭐ Trustpilot" },
+    { id:"appstore",   label:"🍎 App Store",  soon:true },
+    { id:"play",       label:"▶ Google Play", soon:true },
+  ];
+
+  const starColors = {5:"#22C55E",4:"#84CC16",3:"#EAB308",2:"#F97316",1:"#EF4444"};
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+        <div>
+          <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Analytics</h2>
+          <div style={{fontSize:13,color:"#8B949E",marginTop:2,display:"flex",alignItems:"center",gap:6}}>
+            <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:isMock?"#F59E0B":"#22C55E",flexShrink:0}}/>
+            {isMock ? "Showing mock data — add Trustpilot key in 🔑 to go live" : "Live · Trustpilot"}
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:12,color:"#8B949E"}}>Updated: Today at 10:18 AM</span>
+          <button style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A",display:"flex",alignItems:"center",gap:5}}>
+            <span style={{fontSize:13}}>🔄</span> Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Platform tabs */}
+      <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>
+        {platforms.map(p => (
+          <button key={p.id} onClick={()=>!p.soon&&setPlatform(p.id)} style={{
+            padding:"7px 16px",fontSize:13,fontWeight:500,borderRadius:8,
+            cursor:p.soon?"default":"pointer",fontFamily:"inherit",
+            border:`1px solid ${platform===p.id&&!p.soon?"#00B67A":"#D0D7DE"}`,
+            background:platform===p.id&&!p.soon?"#F0FDF9":"#FFF",
+            color:p.soon?"#C0C0C0":platform===p.id?"#059669":"#57606A",
+            display:"flex",alignItems:"center",gap:6,
+          }}>
+            {p.label}
+            {p.soon && <span style={{fontSize:9,background:"#F3F4F6",color:"#9CA3AF",padding:"1px 5px",borderRadius:3,fontWeight:600}}>SOON</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Spike / sentiment alert */}
+      {spike && (
+        <div style={{
+          background:spike.level==="high"?"#FEF2F2":"#FFFBEB",
+          border:`1px solid ${spike.level==="high"?"#FECACA":"#FDE68A"}`,
+          borderRadius:10,padding:"12px 16px",marginBottom:16,
+          display:"flex",alignItems:"center",gap:10,
+        }}>
+          <span style={{fontSize:20,flexShrink:0}}>{spike.level==="high"?"🔴":"🟡"}</span>
+          <div>
+            <div style={{fontSize:13,fontWeight:600,color:spike.level==="high"?"#991B1B":"#92400E"}}>
+              {spike.level==="high"?"Volume spike detected":"Elevated volume"}
+            </div>
+            <div style={{fontSize:12,color:spike.level==="high"?"#DC2626":"#B45309",marginTop:1}}>{spike.message}</div>
+          </div>
+        </div>
+      )}
+
+      {/* KPI cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+        {[
+          { label:"TrustScore",    value:stats.trustScore,          sub:"out of 5.0",      accent:"#00B67A" },
+          { label:"Total reviews", value:stats.total.toLocaleString(), sub:"all time",      accent:"#6366F1" },
+          { label:"Today",         value:stats.today,               sub:"reviews so far",  accent:"#F59E0B" },
+          { label:"7-day avg ★",   value:stats.weekAvgRating.toFixed(2),
+            sub:`${ratingTrendUp?"↑":"↓"} ${Math.abs(ratingDelta).toFixed(2)} vs prev week`,
+            subColor:ratingTrendUp?"#22C55E":"#EF4444",  accent:"#10B981" },
+        ].map(card => (
+          <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
+            <div style={{fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1}}>{card.value}</div>
+            <div style={{fontSize:12,color:card.subColor||"#8B949E",marginTop:5}}>{card.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts row */}
+      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,marginBottom:12}}>
+
+        {/* Volume bar chart */}
+        <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Review volume</div>
+            <div style={{display:"flex",gap:3}}>
+              {["24h","7d","30d"].map(r => (
+                <button key={r} onClick={()=>setRange(r)} style={{
+                  padding:"3px 10px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",
+                  fontFamily:"inherit",border:"1px solid",
+                  borderColor:range===r?"#00B67A":"#D0D7DE",
+                  background:range===r?"#F0FDF9":"#FFF",
+                  color:range===r?"#059669":"#57606A",
+                }}>{r}</button>
+              ))}
+            </div>
+          </div>
+          <BarChart data={chartData} color="#00B67A" height={96}/>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:10,color:"#C0C0C0"}}>
+            <span>{chartData[0]?.label}</span>
+            <span>{chartData[Math.floor(chartData.length/2)]?.label}</span>
+            <span>{chartData[chartData.length-1]?.label}</span>
+          </div>
+        </div>
+
+        {/* Star distribution */}
+        <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1F2328",marginBottom:14}}>Star distribution</div>
+          {[5,4,3,2,1].map(s => {
+            const pct = ((stats.dist[s]/total5)*100);
+            return (
+              <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+                <span style={{fontSize:11,color:"#57606A",width:16,textAlign:"right",flexShrink:0}}>{s}★</span>
+                <div style={{flex:1,background:"#F3F4F6",borderRadius:4,height:8,overflow:"hidden"}}>
+                  <div style={{width:`${pct}%`,background:starColors[s],height:"100%",borderRadius:4,transition:"width 0.4s"}}/>
+                </div>
+                <span style={{fontSize:10,color:"#8B949E",width:34,textAlign:"right",flexShrink:0}}>{pct.toFixed(1)}%</span>
+              </div>
+            );
+          })}
+          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #F3F4F6",fontSize:12,color:"#8B949E",textAlign:"center"}}>
+            {total5.toLocaleString()} total
+          </div>
+        </div>
+      </div>
+
+      {/* Recent reviews */}
+      <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
+        <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
+          <span style={{fontSize:12,color:"#8B949E"}}>Today · most recent first</span>
+        </div>
+        {MOCK_TP_REVIEWS.map((r,i) => (
+          <div key={r.id} style={{
+            padding:"12px 20px",
+            borderBottom:i<MOCK_TP_REVIEWS.length-1?"1px solid #F8F8F8":"none",
+            display:"flex",gap:12,alignItems:"flex-start",
+          }}>
+            <div style={{flexShrink:0,paddingTop:2}}>
+              <StarRating stars={r.stars} size={11}/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
+                <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
+                <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+                {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
+                {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
+              </div>
+              <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
+            </div>
+            <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ═══════════════════════════════════════════════
