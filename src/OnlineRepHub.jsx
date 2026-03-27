@@ -718,8 +718,9 @@ function ScheduleSection({ ghPat }) {
   const [savedMonths,   setSavedMonths]   = useState({});
   const [allSchedules,  setAllSchedules]  = useState({});
   const [showCreator,   setShowCreator]   = useState(false);
-  const [loaded,        setLoaded]        = useState(false);
-  const [toast,         setToast]         = useState(null);
+  const [loaded,            setLoaded]            = useState(false);
+  const [toast,             setToast]             = useState(null);
+  const [deleteConfirmKey,  setDeleteConfirmKey]  = useState(null);
   const saveTimer = useRef(null);
 
   const monthLabel = SCHED_MONTHS[selectedMonth] + " " + selectedYear;
@@ -868,7 +869,6 @@ function ScheduleSection({ ghPat }) {
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           {schedule && <SchedExportScreenshot schedule={schedule} monthLabel={monthLabel} />}
-          {schedule && <SchedExportXLSX schedule={schedule} monthLabel={monthLabel} />}
           <button onClick={()=>setShowCreator(!showCreator)} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",background:"#1e40af",color:"#fff",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
             + New Month
           </button>
@@ -883,7 +883,6 @@ function ScheduleSection({ ghPat }) {
             return (
               <div key={key} style={{display:"flex",alignItems:"center",background:active?"#e0e7ff":"#FFF",border:`1px solid ${active?"#a5b4fc":"#D0D7DE"}`,borderRadius:8,overflow:"hidden"}}>
                 <button onClick={()=>handleLoadMonth(key)} style={{padding:"6px 12px",fontSize:12,fontWeight:active?600:400,color:active?"#3730a3":"#57606A",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
-                <button onClick={()=>handleDeleteMonth(key)} style={{padding:"4px 8px",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:14,fontWeight:700,lineHeight:1}}>×</button>
               </div>
             );
           })}
@@ -923,6 +922,14 @@ function ScheduleSection({ ghPat }) {
           <SchedOffSummary schedule={schedule}/>
           <SchedHOSummary schedule={schedule}/>
           <SchedGrid schedule={schedule} setSchedule={handleScheduleUpdate}/>
+          {/* Delete month — bottom of view, intentional */}
+          <div style={{marginTop:24,paddingTop:16,borderTop:"1px solid #f1f5f9",display:"flex",justifyContent:"flex-end"}}>
+            <button onClick={()=>setDeleteConfirmKey(selectedYear+"-"+selectedMonth)}
+              style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",background:"#FFF",color:"#DC2626",border:"1px solid #FECACA",borderRadius:8,fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              Delete {monthLabel}
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"50vh",textAlign:"center"}}>
@@ -931,6 +938,34 @@ function ScheduleSection({ ghPat }) {
           <button onClick={()=>setShowCreator(true)} style={{padding:"9px 20px",background:"#1e40af",color:"#fff",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Create First Month</button>
         </div>
       )}
+
+      {/* ── Delete confirmation modal ── */}
+      {deleteConfirmKey && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}
+          onClick={()=>setDeleteConfirmKey(null)}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:"#FFF",borderRadius:14,padding:"28px 32px",maxWidth:400,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{fontSize:32,marginBottom:12,textAlign:"center"}}>🗑️</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#1F2328",marginBottom:8,textAlign:"center"}}>
+              Delete {savedMonths[deleteConfirmKey] || deleteConfirmKey}?
+            </div>
+            <div style={{fontSize:13,color:"#57606A",marginBottom:24,textAlign:"center",lineHeight:1.6}}>
+              This will permanently remove the schedule from GitHub and cannot be undone.
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={()=>setDeleteConfirmKey(null)}
+                style={{padding:"9px 24px",background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:8,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>
+                Cancel
+              </button>
+              <button onClick={async()=>{const k=deleteConfirmKey;setDeleteConfirmKey(null);await handleDeleteMonth(k);}}
+                style={{padding:"9px 24px",background:"#DC2626",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",color:"#FFF"}}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -1148,59 +1183,112 @@ function SchedExportScreenshot({ schedule, monthLabel }) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const handleCapture = () => {
     try {
-      const scale=2,colW=105,nameW=150,rowH=26,weekHdrH=30,pad=24;
+      const scale=2,colW=110,nameW=150,rowH=30,weekHdrH=34,pad=24;
       const width=nameW+7*colW+pad*2;
       const weekBlockH=weekHdrH+TEAM.length*rowH+8;
-      const height=70+schedule.length*(weekBlockH+14)+20;
+      const legendH=44;
+      const height=legendH+schedule.length*(weekBlockH+14)+28;
       const c=document.createElement("canvas");c.width=width*scale;c.height=height*scale;
       const ctx=c.getContext("2d");ctx.scale(scale,scale);
+      // Background
       ctx.fillStyle="#f8fafc";ctx.fillRect(0,0,width,height);
-      ctx.fillStyle="#0f172a";ctx.font="bold 20px sans-serif";ctx.fillText(monthLabel,pad,32);
-      let lx=pad;ctx.font="500 11px sans-serif";
-      TEAM.forEach(m=>{const tw=ctx.measureText(m.name.split(" ")[0]).width;ctx.fillStyle=m.color;ctx.beginPath();ctx.arc(lx+5,50,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#475569";ctx.fillText(m.name.split(" ")[0],lx+14,54);lx+=tw+30;});
-      let y=70;
+      // Title
+      ctx.fillStyle="#0f172a";ctx.font="bold 18px sans-serif";ctx.textAlign="left";ctx.fillText(monthLabel,pad,26);
+      // Legend — coloured squares matching shift colours, no stray dots
+      let lx=pad;
+      TEAM.forEach(m=>{
+        const firstName=m.name.split(" ")[0];
+        ctx.font="500 11px sans-serif";
+        const tw=ctx.measureText(firstName).width;
+        // coloured square
+        ctx.fillStyle=m.color;
+        ctx.beginPath();ctx.roundRect(lx,34,10,10,2);ctx.fill();
+        ctx.fillStyle="#475569";ctx.fillText(firstName,lx+14,44);
+        lx+=tw+30;
+      });
+      let y=legendH;
       schedule.forEach(week=>{
         const blockH=weekHdrH+TEAM.length*rowH;
-        ctx.fillStyle="#fff";ctx.fillRect(pad,y,width-pad*2,blockH);ctx.strokeStyle="#e2e8f0";ctx.lineWidth=1;ctx.strokeRect(pad,y,width-pad*2,blockH);
-        ctx.fillStyle="#f8fafc";ctx.fillRect(pad+1,y+1,width-pad*2-2,weekHdrH-1);
-        ctx.fillStyle="#1e293b";ctx.font="bold 10px sans-serif";ctx.textAlign="left";ctx.fillText("WEEK "+week.weekNum,pad+10,y+18);
-        SCHED_DAYS.forEach((day,di)=>{const x=pad+nameW+di*colW;ctx.fillStyle=week.days[di]?"#64748b":"#cbd5e1";ctx.font="600 9px sans-serif";ctx.textAlign="center";ctx.fillText(day.slice(0,3).toUpperCase(),x+colW/2,y+12);if(week.days[di]){ctx.fillStyle="#0f172a";ctx.font="bold 13px sans-serif";ctx.fillText(String(week.days[di].getDate()),x+colW/2,y+26);}});
+        // Week card
+        ctx.fillStyle="#fff";
+        ctx.beginPath();ctx.roundRect(pad,y,width-pad*2,blockH,6);ctx.fill();
+        ctx.strokeStyle="#e2e8f0";ctx.lineWidth=1;
+        ctx.beginPath();ctx.roundRect(pad,y,width-pad*2,blockH,6);ctx.stroke();
+        // Week header bg
+        ctx.fillStyle="#f8fafc";
+        ctx.beginPath();ctx.roundRect(pad+1,y+1,width-pad*2-2,weekHdrH-1,5);ctx.fill();
+        ctx.fillStyle="#1e293b";ctx.font="bold 9px sans-serif";ctx.textAlign="left";
+        ctx.fillText("WEEK "+week.weekNum,pad+10,y+20);
+        // Day headers
+        SCHED_DAYS.forEach((day,di)=>{
+          const x=pad+nameW+di*colW;
+          ctx.fillStyle=week.days[di]?"#64748b":"#cbd5e1";
+          ctx.font="700 8px sans-serif";ctx.textAlign="center";
+          ctx.fillText(day.slice(0,3).toUpperCase(),x+colW/2,y+14);
+          if(week.days[di]){
+            ctx.fillStyle="#0f172a";ctx.font="bold 14px sans-serif";
+            ctx.fillText(String(week.days[di].getDate()),x+colW/2,y+28);
+          }
+        });
         const ry0=y+weekHdrH;
-        TEAM.forEach((member,mi)=>{const ry=ry0+mi*rowH;ctx.fillStyle="#1e293b";ctx.font="600 11px sans-serif";ctx.textAlign="left";ctx.fillText(member.name.split(" ")[0],pad+10,ry+rowH/2+4);
-          week.shifts[mi].forEach((shift,di)=>{if(!shift&&!week.days[di])return;const x=pad+nameW+di*colW;const st=getShiftStyle(shift);ctx.fillStyle=st.bg;ctx.fillRect(x+1,ry+2,colW-2,rowH-4);if(st.accent){ctx.fillStyle=st.accent;ctx.fillRect(x+1,ry+2,3,rowH-4);}ctx.fillStyle=st.fg;ctx.font="500 10.5px sans-serif";ctx.textAlign="center";ctx.fillText(shift||"",x+colW/2,ry+rowH/2+4);});
+        TEAM.forEach((member,mi)=>{
+          const ry=ry0+mi*rowH;
+          // Name
+          ctx.fillStyle="#1e293b";ctx.font="600 11px sans-serif";ctx.textAlign="left";
+          ctx.fillText(member.name.split(" ")[0],pad+10,ry+rowH/2+4);
+          // Cells
+          week.shifts[mi].forEach((shift,di)=>{
+            if(!shift&&!week.days[di])return;
+            const x=pad+nameW+di*colW;
+            const st=getShiftStyle(shift);
+            ctx.fillStyle=st.bg;
+            ctx.beginPath();ctx.roundRect(x+2,ry+3,colW-4,rowH-6,4);ctx.fill();
+            if(st.accent){ctx.fillStyle=st.accent;ctx.fillRect(x+2,ry+3,3,rowH-6);}
+            ctx.fillStyle=st.fg;ctx.font="500 10px sans-serif";ctx.textAlign="center";
+            ctx.fillText(shift||"",x+colW/2,ry+rowH/2+4);
+            // HO badge
+            const hoArr=(week.homeOffice||[])[mi];
+            if(hoArr&&hoArr[di]){
+              ctx.fillStyle="#0ea5e9";
+              ctx.beginPath();ctx.roundRect(x+colW-18,ry+3,16,10,3);ctx.fill();
+              ctx.fillStyle="#fff";ctx.font="bold 7px sans-serif";ctx.textAlign="center";
+              ctx.fillText("HO",x+colW-10,ry+11);
+            }
+          });
         });
         y+=blockH+14;
       });
-      ctx.textAlign="left";ctx.fillStyle="#94a3b8";ctx.font="400 10px sans-serif";ctx.fillText("Trading 212 · Online Reputation Team",pad,y);
+      // Footer
+      ctx.textAlign="left";ctx.fillStyle="#94a3b8";ctx.font="400 10px sans-serif";
+      ctx.fillText("Trading 212 · Online Reputation Team · "+monthLabel,pad,y+12);
       setPreviewUrl(c.toDataURL("image/png"));
     } catch(e){console.error("Screenshot failed:",e);}
   };
   return (
     <>
-      <button onClick={handleCapture} style={SS.exportBtn}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Screenshot</button>
-      {previewUrl&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setPreviewUrl(null)}><div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:12,maxWidth:"92vw",maxHeight:"92vh",overflow:"auto",padding:16}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>Right-click → Save As</span><button onClick={()=>setPreviewUrl(null)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#94a3b8"}}>×</button></div><img src={previewUrl} alt={"Schedule "+monthLabel} style={{width:"100%",borderRadius:8,border:"1px solid #e2e8f0"}}/></div></div>}
+      <button onClick={handleCapture} style={SS.exportBtn}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Screenshot
+      </button>
+      {previewUrl && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}
+          onClick={()=>setPreviewUrl(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:12,maxWidth:"96vw",maxHeight:"92vh",overflow:"auto",padding:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div>
+                <span style={{fontSize:13,fontWeight:600,color:"#1e293b"}}>Schedule — {monthLabel}</span>
+                <span style={{fontSize:11,color:"#94a3b8",marginLeft:12}}>Right-click → Save image as…</span>
+              </div>
+              <button onClick={()=>setPreviewUrl(null)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#94a3b8"}}>×</button>
+            </div>
+            <img src={previewUrl} alt={"Schedule "+monthLabel} style={{width:"100%",borderRadius:8,border:"1px solid #e2e8f0",display:"block"}}/>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-function loadSheetJS(){return new Promise((resolve,reject)=>{if(window.XLSX)return resolve(window.XLSX);const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=()=>resolve(window.XLSX);s.onerror=()=>reject(new Error("Failed to load SheetJS"));document.head.appendChild(s);});}
-
-function SchedExportXLSX({ schedule, monthLabel }) {
-  const [status, setStatus] = useState(null);
-  const handleExport = async () => {
-    setStatus("working");
-    try {
-      const XLSX=await loadSheetJS();
-      const rows=[["","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday",""]];
-      schedule.forEach(week=>{rows.push(["Week "+week.weekNum,...week.days.map(d=>d?d:""),""]); TEAM.forEach((m,mi)=>rows.push([m.name,...week.shifts[mi].map(s=>s||""),""]));});
-      const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},...Array(7).fill({wch:16}),{wch:5}];
-      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,monthLabel.slice(0,31));
-      XLSX.writeFile(wb,"ORT_Schedule_"+monthLabel.replace(/\s/g,"_")+".xlsx");
-      setStatus("done");setTimeout(()=>setStatus(null),2000);
-    } catch(e){setStatus("error");setTimeout(()=>setStatus(null),3000);}
-  };
-  return <button onClick={handleExport} disabled={status==="working"} style={{...SS.exportBtn,background:status==="done"?"#ecfdf5":status==="error"?"#fef2f2":"#fff"}}>{status==="done"?"✓ Exported":status==="error"?"✗ Failed":status==="working"?"Exporting…":<><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export .xlsx</>}</button>;
-}
 
 function SchedToast({ message, onDone }) {
   useEffect(()=>{const t=setTimeout(onDone,2200);return()=>clearTimeout(t);},[onDone]);
