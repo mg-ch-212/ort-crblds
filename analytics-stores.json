@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T22:35:36.341Z",
+  "updatedAt": "2026-03-27T22:50:37.234Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T22:35:35.769Z",
+    "updatedAt": "2026-03-27T22:50:36.040Z",
     "recentReviews": [
       {
         "id": "8781f245-0a63-41e3-9f12-32b079041990",
@@ -626,23 +626,15 @@
         "text": "\t1.) Long-term investing: ++Simple and logical operation. ++Use a daily (!) savings plan to buy my favorites at an average price. Only a few providers offer this so far (IBKR, Robinhood) --Moderate spreads but unfortunately additional USD exchange rate costs. 2.) Shorter-term trading: --I'm not currently using this here. Please also offer the option of account management in USD for CFDs, so that currency fees aren't charged on every trade of US stocks.",
         "createdAt": "2026-03-21T07:43:31.000Z",
         "replied": false
-      },
-      {
-        "id": "05561b8f-830e-44ec-a8c1-276d7bd970ae",
-        "stars": 1,
-        "author": "gligor daniel",
-        "text": "\talthough it says you can withdraw up to ?400/$ without commissions, you are wrong, for ?378 I was charged the estimated amount of ?45, I contacted them and they do absolutely nothing, THEY DON'T WANT TO CONTACT THE BANK , pur si simplu nu fac nimic, deci, After they stole my money, they closed my account, be careful with them or you will run out of money",
-        "createdAt": "2026-03-20T22:41:57.000Z",
-        "replied": true
       }
     ],
     "stats": {
-      "fetchedCount": 79,
-      "avgRating": "3.86"
+      "fetchedCount": 78,
+      "avgRating": "3.90"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T22:35:36.341Z",
+    "updatedAt": "2026-03-27T22:50:37.234Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
