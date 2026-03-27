@@ -153,7 +153,77 @@ const MOCK_TP_REVIEWS = [
   {id:"r5",stars:2,author:"Paul Clark",title:"I find it difficult to set up monthly deposits",text:"I find it difficult to set up monthly deposit and moving money around",time:"01:33 AM",replied:false},
 ];
 // Hour 10 has 12 reviews vs ~4.5 baseline → 2.7× → ELEVATED (demo)
-const MOCK_SPIKE = { level:"elevated", message:"2.7× more reviews than usual for 10:00–11:00 AM (12 vs ~4.5 avg)" };
+const MOCK_SPIKE = { level:"elevated", type:"volume", ratio:"2.7", count:12, baseline:"4.5" };
+
+// ═══════════════════════════════════════════════
+//  ANALYTICS HELPERS
+// ═══════════════════════════════════════════════
+const ANALYTICS_SNAPS_KEY = "ort-analytics-snaps";
+
+function loadAnalyticsSnaps() {
+  try { return JSON.parse(localStorage.getItem(ANALYTICS_SNAPS_KEY)) || []; }
+  catch { return []; }
+}
+function saveAnalyticsSnap(snap) {
+  const all = loadAnalyticsSnaps();
+  all.push(snap);
+  const cutoff = Date.now() - 35*24*60*60*1000; // keep 35 days
+  try { localStorage.setItem(ANALYTICS_SNAPS_KEY, JSON.stringify(all.filter(s => new Date(s.ts)>cutoff))); } catch {}
+}
+function buildHourlyData(reviews) {
+  const buckets = Array.from({length:24}, (_,h) => ({ h, n:0, label:`${h}:00` }));
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  (reviews||[]).forEach(r => {
+    const d = new Date(r.createdAt);
+    if (d >= todayStart) buckets[d.getHours()].n++;
+  });
+  return buckets;
+}
+function buildDailyFromSnaps(snaps, days) {
+  const result = [];
+  const now = new Date();
+  for (let i = days-1; i >= 0; i--) {
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()-i);
+    const dayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate()-i+1);
+    const label    = i===0 ? "Today"
+      : dayStart.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+    const daySnaps = snaps.filter(s => { const d=new Date(s.ts); return d>=dayStart&&d<dayEnd; });
+    if (daySnaps.length >= 2) {
+      result.push({ label, n: Math.max(0, Math.max(...daySnaps.map(s=>s.total)) - Math.min(...daySnaps.map(s=>s.total))) });
+    } else {
+      // Cross-day delta: last snap of previous day → first snap of this day
+      const prevSnaps = snaps.filter(s => new Date(s.ts)<dayStart);
+      const first     = daySnaps[0];
+      const lastPrev  = prevSnaps.length ? prevSnaps.sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0] : null;
+      result.push({ label, n: (first&&lastPrev) ? Math.max(0, first.total-lastPrev.total) : 0 });
+    }
+  }
+  return result;
+}
+function detectSpike(reviews) {
+  if (!reviews || reviews.length < 5) return null;
+  const now     = new Date();
+  const hourAgo = new Date(now - 60*60*1000);
+  const h48Ago  = new Date(now - 48*60*60*1000);
+  const current = reviews.filter(r => new Date(r.createdAt) > hourAgo);
+  const prior48 = reviews.filter(r => { const d=new Date(r.createdAt); return d>h48Ago&&d<=hourAgo; });
+  // Volume spike
+  if (prior48.length >= 6) {
+    const baseline = prior48.length / 47;
+    if (baseline > 0.3) {
+      const ratio = current.length / baseline;
+      if (ratio >= 2.0) return { level:"high",     type:"volume",    ratio:ratio.toFixed(1), count:current.length, baseline:baseline.toFixed(1) };
+      if (ratio >= 1.5) return { level:"elevated",  type:"volume",    ratio:ratio.toFixed(1), count:current.length, baseline:baseline.toFixed(1) };
+    }
+  }
+  // Sentiment spike
+  if (current.length >= 3 && prior48.length >= 5) {
+    const rNow  = current.reduce((s,r)=>s+r.stars,0)/current.length;
+    const rBase = prior48.reduce((s,r)=>s+r.stars,0)/prior48.length;
+    if (rBase - rNow >= 1.0) return { level:"elevated", type:"sentiment", recentAvg:rNow.toFixed(1), baselineAvg:rBase.toFixed(1) };
+  }
+  return null;
+}
 
 // ═══════════════════════════════════════════════
 //  GITHUB API HELPERS
@@ -346,7 +416,7 @@ export default function SocialMediaHub() {
     { id:"templates",   icon:"💬", label:"Templates" },
     ...(ghPat ? [{ id:"pending", icon:"📥", label:"Pending Items", badge:pendingCount }] : []),
     { id:"schedule",    icon:"📅", label:"Schedule" },
-    { id:"analytics",   icon:"📊", label:"Analytics",        soon:true },
+    { id:"analytics",   icon:"📊", label:"Analytics" },
     { id:"performance", icon:"🏆", label:"Team Performance", soon:true },
     { id:"resources",   icon:"🔗", label:"Resources",        soon:true },
   ];
@@ -1045,28 +1115,85 @@ function BarChart({ data, valueKey="n", color="#00B67A", height=96 }) {
 }
 
 function AnalyticsSection({ tpKey }) {
-  const [platform, setPlatform] = useState("trustpilot");
-  const [range,    setRange]    = useState("24h");
+  const [liveStats,   setLiveStats]   = useState(null);
+  const [liveReviews, setLiveReviews] = useState(null);
+  const [loading,     setLoading]     = useState(false);
+  const [fetchError,  setFetchError]  = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [platform,    setPlatform]    = useState("trustpilot");
+  const [range,       setRange]       = useState("24h");
+  const [snaps,       setSnaps]       = useState(() => loadAnalyticsSnaps());
 
-  const chartData = range==="24h" ? MOCK_TP_24H.map(d=>({...d,label:`${d.h}:00`}))
-    : range==="7d"  ? MOCK_TP_7D
-    : MOCK_TP_30D;
+  const doFetch = useCallback(async () => {
+    if (!tpKey) return;
+    setLoading(true); setFetchError(null);
+    try {
+      const [sRes, rRes] = await Promise.all([
+        fetch(`${TP_API}?apikey=${tpKey}`),
+        fetch(`${TP_API}/reviews?apikey=${tpKey}&perPage=100&orderBy=createdat.desc`),
+      ]);
+      if (!sRes.ok) throw new Error(sRes.status===401 ? "Invalid Trustpilot key — check 🔑 settings." : `Trustpilot API error (${sRes.status})`);
+      const [s, r] = await Promise.all([sRes.json(), rRes.json()]);
+      setLiveStats(s);
+      setLiveReviews(r.reviews || []);
+      setLastUpdated(new Date());
+      saveAnalyticsSnap({ ts:new Date().toISOString(), score:s.score?.trustScore, total:s.numberOfReviews?.total });
+      setSnaps(loadAnalyticsSnaps());
+    } catch(e) { setFetchError(e.message); }
+    finally { setLoading(false); }
+  }, [tpKey]);
 
-  const stats     = MOCK_TP_STATS;
-  const spike     = MOCK_SPIKE;
-  const total5    = Object.values(stats.dist).reduce((a,b)=>a+b,0);
-  const isMock    = !tpKey; // once live data is wired, this flips
+  useEffect(() => { doFetch(); }, [doFetch]);
 
-  const ratingDelta   = stats.weekAvgRating - stats.prevWeekAvgRating;
+  // ── derive display data ──────────────────────────────────
+  const isLive = !!liveStats;
+  const reviews = isLive ? liveReviews : [];
+
+  const stats = isLive ? {
+    trustScore:    liveStats.score?.trustScore ?? "—",
+    total:         liveStats.numberOfReviews?.total ?? 0,
+    today:         buildHourlyData(reviews).reduce((s,h)=>s+h.n, 0),
+    weekCount:     reviews.filter(r=>new Date(r.createdAt)>new Date(Date.now()-7*24*3600*1000)).length,
+    weekAvgRating: (() => { const w=reviews.filter(r=>new Date(r.createdAt)>new Date(Date.now()-7*24*3600*1000)); return w.length?w.reduce((s,r)=>s+r.stars,0)/w.length:0; })(),
+    prevWeekAvgRating: (() => { const s=new Date(Date.now()-14*24*3600*1000),e=new Date(Date.now()-7*24*3600*1000); const w=reviews.filter(r=>{const d=new Date(r.createdAt);return d>s&&d<e;}); return w.length?w.reduce((a,r)=>a+r.stars,0)/w.length:0; })(),
+    dist: { 5:liveStats.numberOfReviews?.fiveStars||0, 4:liveStats.numberOfReviews?.fourStars||0, 3:liveStats.numberOfReviews?.threeStars||0, 2:liveStats.numberOfReviews?.twoStars||0, 1:liveStats.numberOfReviews?.oneStar||0 },
+  } : MOCK_TP_STATS;
+
+  const spike      = isLive ? detectSpike(reviews) : MOCK_SPIKE;
+  const hourly24h  = isLive ? buildHourlyData(reviews) : MOCK_TP_24H.map(d=>({...d,label:`${d.h}:00`}));
+  const daily7d    = isLive ? buildDailyFromSnaps(snaps,7)  : MOCK_TP_7D;
+  const daily30d   = isLive ? buildDailyFromSnaps(snaps,30) : MOCK_TP_30D;
+  const chartData  = range==="24h" ? hourly24h : range==="7d" ? daily7d : daily30d;
+  const total5     = Object.values(stats.dist).reduce((a,b)=>a+(b||0),0);
+
+  const displayReviews = isLive
+    ? reviews.slice(0,10).map(r=>({ id:r.id, stars:r.stars,
+        author: r.consumer?.displayName||"Anonymous",
+        title:  r.title, text:r.text,
+        time:   new Date(r.createdAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
+        replied:!!r.companyReply }))
+    : MOCK_TP_REVIEWS;
+
+  const ratingDelta   = (stats.weekAvgRating||0) - (stats.prevWeekAvgRating||0);
   const ratingTrendUp = ratingDelta >= 0;
+  const fmtUpdated    = lastUpdated
+    ? lastUpdated.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+    : loading ? "Fetching…" : "—";
 
-  const platforms = [
+  const starColors    = {5:"#22C55E",4:"#84CC16",3:"#EAB308",2:"#F97316",1:"#EF4444"};
+  const platforms     = [
     { id:"trustpilot", label:"⭐ Trustpilot" },
     { id:"appstore",   label:"🍎 App Store",  soon:true },
     { id:"play",       label:"▶ Google Play", soon:true },
   ];
 
-  const starColors = {5:"#22C55E",4:"#84CC16",3:"#EAB308",2:"#F97316",1:"#EF4444"};
+  // ── spike banner helpers ─────────────────────────────────
+  const spikeIsHigh = spike?.level==="high";
+  const spikeMsg = spike ? (
+    spike.type==="sentiment"
+      ? `Average rating dropped to ${spike.recentAvg}★ in the last hour vs ${spike.baselineAvg}★ baseline`
+      : `${spike.ratio}× more reviews than usual this hour (${spike.count} vs ~${spike.baseline} avg)`
+  ) : null;
 
   return (
     <div>
@@ -1075,17 +1202,24 @@ function AnalyticsSection({ tpKey }) {
         <div>
           <h2 style={{fontSize:20,fontWeight:700,color:"#1F2328",margin:0}}>Analytics</h2>
           <div style={{fontSize:13,color:"#8B949E",marginTop:2,display:"flex",alignItems:"center",gap:6}}>
-            <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:isMock?"#F59E0B":"#22C55E",flexShrink:0}}/>
-            {isMock ? "Showing mock data — add Trustpilot key in 🔑 to go live" : "Live · Trustpilot"}
+            <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",
+              background:loading?"#F59E0B":isLive?"#22C55E":"#F59E0B",flexShrink:0}}/>
+            {!tpKey  ? "Add Trustpilot key in 🔑 to go live — showing mock data"
+              : loading ? "Fetching live data…"
+              : fetchError ? "Showing mock data (fetch failed)"
+              : `Live · updated at ${fmtUpdated}`}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:12,color:"#8B949E"}}>Updated: Today at 10:18 AM</span>
-          <button style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A",display:"flex",alignItems:"center",gap:5}}>
-            <span style={{fontSize:13}}>🔄</span> Refresh
-          </button>
+          {tpKey && <button onClick={doFetch} disabled={loading} style={{background:"#FFF",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,cursor:loading?"default":"pointer",fontFamily:"inherit",color:"#57606A",display:"flex",alignItems:"center",gap:5,opacity:loading?0.6:1}}>
+            <span style={{fontSize:13,display:"inline-block",animation:loading?"spin 1s linear infinite":"none"}}>🔄</span>
+            {loading?"Refreshing…":"Refresh"}
+          </button>}
         </div>
       </div>
+
+      {/* Fetch error */}
+      {fetchError && <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#DC2626"}}>⚠️ {fetchError}</div>}
 
       {/* Platform tabs */}
       <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap"}}>
@@ -1106,18 +1240,13 @@ function AnalyticsSection({ tpKey }) {
 
       {/* Spike / sentiment alert */}
       {spike && (
-        <div style={{
-          background:spike.level==="high"?"#FEF2F2":"#FFFBEB",
-          border:`1px solid ${spike.level==="high"?"#FECACA":"#FDE68A"}`,
-          borderRadius:10,padding:"12px 16px",marginBottom:16,
-          display:"flex",alignItems:"center",gap:10,
-        }}>
-          <span style={{fontSize:20,flexShrink:0}}>{spike.level==="high"?"🔴":"🟡"}</span>
+        <div style={{background:spikeIsHigh?"#FEF2F2":"#FFFBEB",border:`1px solid ${spikeIsHigh?"#FECACA":"#FDE68A"}`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:20,flexShrink:0}}>{spikeIsHigh?"🔴":"🟡"}</span>
           <div>
-            <div style={{fontSize:13,fontWeight:600,color:spike.level==="high"?"#991B1B":"#92400E"}}>
-              {spike.level==="high"?"Volume spike detected":"Elevated volume"}
+            <div style={{fontSize:13,fontWeight:600,color:spikeIsHigh?"#991B1B":"#92400E"}}>
+              {spike.type==="sentiment" ? "Sentiment drop detected" : spikeIsHigh ? "Volume spike" : "Elevated volume"}
             </div>
-            <div style={{fontSize:12,color:spike.level==="high"?"#DC2626":"#B45309",marginTop:1}}>{spike.message}</div>
+            <div style={{fontSize:12,color:spikeIsHigh?"#DC2626":"#B45309",marginTop:1}}>{spikeMsg}</div>
           </div>
         </div>
       )}
@@ -1125,12 +1254,12 @@ function AnalyticsSection({ tpKey }) {
       {/* KPI cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
         {[
-          { label:"TrustScore",    value:stats.trustScore,          sub:"out of 5.0",      accent:"#00B67A" },
-          { label:"Total reviews", value:stats.total.toLocaleString(), sub:"all time",      accent:"#6366F1" },
-          { label:"Today",         value:stats.today,               sub:"reviews so far",  accent:"#F59E0B" },
-          { label:"7-day avg ★",   value:stats.weekAvgRating.toFixed(2),
-            sub:`${ratingTrendUp?"↑":"↓"} ${Math.abs(ratingDelta).toFixed(2)} vs prev week`,
-            subColor:ratingTrendUp?"#22C55E":"#EF4444",  accent:"#10B981" },
+          { label:"TrustScore",    value:stats.trustScore,                                   sub:"out of 5.0" },
+          { label:"Total reviews", value:(stats.total||0).toLocaleString(),                   sub:"all time" },
+          { label:"Today",         value:stats.today,                                         sub:"reviews so far" },
+          { label:"7-day avg ★",   value:stats.weekAvgRating?(stats.weekAvgRating.toFixed(2)+"★"):"—",
+            sub: stats.weekAvgRating ? `${ratingTrendUp?"↑":"↓"} ${Math.abs(ratingDelta).toFixed(2)} vs prev week` : `${stats.weekCount||0} reviews this week`,
+            subColor: stats.weekAvgRating ? (ratingTrendUp?"#22C55E":"#EF4444") : undefined },
         ].map(card => (
           <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
             <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
@@ -1142,20 +1271,12 @@ function AnalyticsSection({ tpKey }) {
 
       {/* Charts row */}
       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:12,marginBottom:12}}>
-
-        {/* Volume bar chart */}
         <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Review volume</div>
             <div style={{display:"flex",gap:3}}>
               {["24h","7d","30d"].map(r => (
-                <button key={r} onClick={()=>setRange(r)} style={{
-                  padding:"3px 10px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",
-                  fontFamily:"inherit",border:"1px solid",
-                  borderColor:range===r?"#00B67A":"#D0D7DE",
-                  background:range===r?"#F0FDF9":"#FFF",
-                  color:range===r?"#059669":"#57606A",
-                }}>{r}</button>
+                <button key={r} onClick={()=>setRange(r)} style={{padding:"3px 10px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid",borderColor:range===r?"#00B67A":"#D0D7DE",background:range===r?"#F0FDF9":"#FFF",color:range===r?"#059669":"#57606A"}}>{r}</button>
               ))}
             </div>
           </div>
@@ -1165,13 +1286,15 @@ function AnalyticsSection({ tpKey }) {
             <span>{chartData[Math.floor(chartData.length/2)]?.label}</span>
             <span>{chartData[chartData.length-1]?.label}</span>
           </div>
+          {isLive && range!=="24h" && snaps.length<2 && (
+            <div style={{fontSize:11,color:"#8B949E",marginTop:8,textAlign:"center"}}>📈 7d/30d charts fill in over time as the app collects daily snapshots</div>
+          )}
         </div>
 
-        {/* Star distribution */}
         <div style={{background:"#FFF",borderRadius:12,padding:"18px 20px",border:"1px solid #E1E4E8"}}>
           <div style={{fontSize:13,fontWeight:600,color:"#1F2328",marginBottom:14}}>Star distribution</div>
           {[5,4,3,2,1].map(s => {
-            const pct = ((stats.dist[s]/total5)*100);
+            const pct = total5>0 ? (stats.dist[s]/total5)*100 : 0;
             return (
               <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
                 <span style={{fontSize:11,color:"#57606A",width:16,textAlign:"right",flexShrink:0}}>{s}★</span>
@@ -1182,9 +1305,7 @@ function AnalyticsSection({ tpKey }) {
               </div>
             );
           })}
-          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #F3F4F6",fontSize:12,color:"#8B949E",textAlign:"center"}}>
-            {total5.toLocaleString()} total
-          </div>
+          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #F3F4F6",fontSize:12,color:"#8B949E",textAlign:"center"}}>{total5.toLocaleString()} total</div>
         </div>
       </div>
 
@@ -1192,17 +1313,14 @@ function AnalyticsSection({ tpKey }) {
       <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
         <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-          <span style={{fontSize:12,color:"#8B949E"}}>Today · most recent first</span>
+          <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
         </div>
-        {MOCK_TP_REVIEWS.map((r,i) => (
-          <div key={r.id} style={{
-            padding:"12px 20px",
-            borderBottom:i<MOCK_TP_REVIEWS.length-1?"1px solid #F8F8F8":"none",
-            display:"flex",gap:12,alignItems:"flex-start",
-          }}>
-            <div style={{flexShrink:0,paddingTop:2}}>
-              <StarRating stars={r.stars} size={11}/>
-            </div>
+        {loading && !liveReviews && (
+          <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
+        )}
+        {displayReviews.map((r,i) => (
+          <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayReviews.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
                 <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
