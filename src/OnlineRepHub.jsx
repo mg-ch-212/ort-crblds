@@ -41,16 +41,18 @@ const SCHED_MONTHS = ["January","February","March","April","May","June","July","
 // ═══════════════════════════════════════════════
 function getMonthWeeks(year, month) {
   const firstDay = new Date(year, month, 1);
-  const dow = firstDay.getDay();
-  let firstMonday = new Date(firstDay);
-  if (dow === 0) firstMonday.setDate(firstDay.getDate() + 1);
-  else if (dow > 1) firstMonday.setDate(firstDay.getDate() + (8 - dow));
-  const weeks = []; let current = new Date(firstMonday); let weekNum = 1;
+  const lastDay  = new Date(year, month + 1, 0);
+  // Find the Monday of the week that contains the 1st (may be in the previous month)
+  const dow = firstDay.getDay(); // 0=Sun,1=Mon…6=Sat
+  const toMonday = dow === 0 ? -6 : 1 - dow;
+  const weekStart = new Date(firstDay);
+  weekStart.setDate(firstDay.getDate() + toMonday);
+  const weeks = []; let current = new Date(weekStart); let weekNum = 1;
   while (weekNum <= 6) {
-    if (current.getMonth() !== month && weekNum > 1) break;
-    const week = []; const weekStart = new Date(current);
-    for (let d = 0; d < 7; d++) { const date = new Date(weekStart); date.setDate(weekStart.getDate() + d); week.push(date.getMonth() === month ? date : null); }
-    if (week.some(d => d !== null)) { weeks.push({ weekNum, days: week, startDate: weekStart }); weekNum++; }
+    if (current > lastDay) break;
+    const week = []; const ws = new Date(current);
+    for (let d = 0; d < 7; d++) { const date = new Date(ws); date.setDate(ws.getDate() + d); week.push(date.getMonth() === month ? date : null); }
+    if (week.some(d => d !== null)) { weeks.push({ weekNum, days: week, startDate: ws }); weekNum++; }
     current.setDate(current.getDate() + 7);
   }
   return weeks;
