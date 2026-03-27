@@ -1127,6 +1127,7 @@ function AnalyticsSection({ tpKey }) {
   const [storeData,    setStoreData]    = useState(null);
   const [storeLoading, setStoreLoading] = useState(false);
   const [storeError,   setStoreError]   = useState(null);
+  const [reviewLimit,  setReviewLimit]  = useState(10);
 
   const fetchStores = useCallback(async () => {
     setStoreLoading(true); setStoreError(null);
@@ -1160,6 +1161,7 @@ function AnalyticsSection({ tpKey }) {
   useEffect(() => { doFetch(); }, [doFetch]);
   useEffect(() => {
     if (platform === "appstore" || platform === "play") fetchStores();
+    setReviewLimit(10);
   }, [platform, fetchStores]);
 
   // ── derive display data ──────────────────────────────────
@@ -1184,7 +1186,7 @@ function AnalyticsSection({ tpKey }) {
   const total5     = Object.values(stats.dist).reduce((a,b)=>a+(b||0),0);
 
   const displayReviews = isLive
-    ? reviews.slice(0,10).map(r=>({ id:r.id, stars:r.stars,
+    ? reviews.slice(0, reviewLimit).map(r=>({ id:r.id, stars:r.stars,
         author: r.consumer?.displayName||"Anonymous",
         title:  r.title, text:r.text,
         time:   new Date(r.createdAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
@@ -1196,6 +1198,12 @@ function AnalyticsSection({ tpKey }) {
   const fmtUpdated    = lastUpdated
     ? lastUpdated.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
     : loading ? "Fetching…" : "—";
+
+  const storeSyncTime = storeData ? (() => {
+    const key = platform === "play" ? "googlePlay" : "appStore";
+    const ts  = storeData[key]?.updatedAt;
+    return ts ? new Date(ts).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) : "—";
+  })() : null;
 
   const starColors    = {5:"#22C55E",4:"#84CC16",3:"#EAB308",2:"#F97316",1:"#EF4444"};
   const platforms     = [
@@ -1228,7 +1236,7 @@ function AnalyticsSection({ tpKey }) {
                   : `Live · updated at ${fmtUpdated}`)
               : storeLoading ? "Fetching from GitHub…"
               : storeError ? `Error: ${storeError}`
-              : storeData ? `Synced by Apps Script · every 15 min`
+              : storeData ? `Synced by Apps Script · every 15 min · Last sync ${storeSyncTime}`
               : "Click Refresh to load"}
           </div>
         </div>
@@ -1338,30 +1346,45 @@ function AnalyticsSection({ tpKey }) {
         </div>
 
         {/* Recent reviews */}
-        <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
-          <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-            <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
-          </div>
-          {loading && !liveReviews && (
-            <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
-          )}
-          {displayReviews.map((r,i) => (
-            <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayReviews.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
-              <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
-                  <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
-                  <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
-                  {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
-                  {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
-                </div>
-                <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
+        {(() => {
+          const total = isLive ? reviews.length : MOCK_TP_REVIEWS.length;
+          const maxLimit = 50;
+          const canMore = reviewLimit < Math.min(total, maxLimit);
+          return (
+            <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
+              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
+                <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
               </div>
-              <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
+              {loading && !liveReviews && (
+                <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
+              )}
+              {displayReviews.map((r,i) => (
+                <div key={r.id} style={{padding:"12px 20px",borderBottom:"1px solid #F8F8F8",display:"flex",gap:12,alignItems:"flex-start"}}>
+                  <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
+                      <span style={{fontSize:12,fontWeight:600,color:"#1F2328"}}>{r.author}</span>
+                      <span style={{fontSize:11,color:"#8B949E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+                      {r.replied && <span style={{fontSize:9,background:"#DBEAFE",color:"#1D4ED8",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>REPLIED</span>}
+                      {!r.replied && r.stars<=2 && <span style={{fontSize:9,background:"#FEE2E2",color:"#991B1B",padding:"1px 5px",borderRadius:3,fontWeight:600,flexShrink:0}}>NEEDS REPLY</span>}
+                    </div>
+                    <div style={{fontSize:12,color:"#57606A",lineHeight:1.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.text}</div>
+                  </div>
+                  <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
+                </div>
+              ))}
+              {canMore && (
+                <div style={{padding:"12px 20px",borderTop:"1px solid #F3F4F6",textAlign:"center"}}>
+                  <button onClick={()=>setReviewLimit(l=>Math.min(l+10,maxLimit))}
+                    style={{background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>
+                    See 10 more · showing {reviewLimit} of {Math.min(total,maxLimit)}
+                  </button>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })()}
       </>)}
 
       {/* ── App Store / Google Play content ── */}
@@ -1369,29 +1392,9 @@ function AnalyticsSection({ tpKey }) {
         const isPlay = platform === "play";
         const key = isPlay ? "googlePlay" : "appStore";
         const pd = storeData?.[key];
-        const reviews = pd?.recentReviews || [];
-        const needsReply = reviews.filter(r => !r.replied && r.stars <= 2).length;
-        const lastUpdated = pd?.updatedAt
-          ? new Date(pd.updatedAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
-          : "—";
-        const kpis = isPlay
-          ? [
-              { label:"Avg rating",     value: pd?.stats?.avgRating ? `${parseFloat(pd.stats.avgRating).toFixed(2)}★` : "—", sub:"recent reviews" },
-              { label:"Recent reviews", value: pd?.stats?.fetchedCount ?? "—", sub:"fetched this cycle" },
-              { label:"Needs reply",    value: needsReply, sub:"≤2★ unanswered" },
-              { label:"Last sync",      value: lastUpdated, sub:"Apps Script pipeline" },
-            ]
-          : [
-              { label:"Overall rating", value: pd?.stats?.rating ? `${pd.stats.rating.toFixed(2)}★` : "—", sub:"App Store score" },
-              { label:"Total ratings",  value: pd?.stats?.ratingCount ? pd.stats.ratingCount.toLocaleString() : "—", sub:"all time" },
-              { label:"App version",    value: pd?.stats?.version ?? "—", sub:"current" },
-              { label:"Last sync",      value: lastUpdated, sub:"Apps Script pipeline" },
-            ];
-        const displayRevs = reviews.slice(0,10).map(r => ({
-          id: r.id, stars: r.stars, author: r.author, title: r.title||"",
-          text: r.text, replied: r.replied,
-          time: new Date(r.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
-        }));
+        const allRevs = pd?.recentReviews || [];
+        const maxLimit = 50;
+
         if (storeLoading) return (
           <div style={{padding:"56px",textAlign:"center",color:"#8B949E",fontSize:13}}>
             <div style={{fontSize:28,marginBottom:12}}>⏳</div>
@@ -1407,27 +1410,79 @@ function AnalyticsSection({ tpKey }) {
             Click Refresh to load data from GitHub.
           </div>
         );
+
+        // ── unified + extra KPI data ──────────────────────
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        const todayCount = allRevs.filter(r => new Date(r.createdAt) >= todayStart).length;
+        const w7 = allRevs.filter(r => new Date(r.createdAt) > new Date(Date.now()-7*24*3600*1000));
+        const w7avg = w7.length ? w7.reduce((s,r)=>s+r.stars,0)/w7.length : null;
+        const needsReply = allRevs.filter(r => !r.replied && r.stars <= 2).length;
+
+        const unifiedKpis = isPlay
+          ? [
+              { label:"Avg Rating",     value: pd.stats?.avgRating ? `${parseFloat(pd.stats.avgRating).toFixed(2)}★` : "—", sub:"recent reviews" },
+              { label:"Recent Reviews", value: pd.stats?.fetchedCount ?? "—", sub:"fetched this cycle" },
+              { label:"Today",          value: todayCount, sub:"reviews so far" },
+              { label:"7-day avg ★",    value: w7avg ? `${w7avg.toFixed(2)}★` : "—",
+                sub: w7.length ? `${w7.length} reviews this week` : "no data yet" },
+            ]
+          : [
+              { label:"Overall Rating", value: pd.stats?.rating ? `${pd.stats.rating.toFixed(2)}★` : "—", sub:"App Store score" },
+              { label:"Total Ratings",  value: pd.stats?.ratingCount ? pd.stats.ratingCount.toLocaleString() : "—", sub:"all time" },
+              { label:"Today",          value: todayCount, sub:"reviews so far" },
+              { label:"7-day avg ★",    value: w7avg ? `${w7avg.toFixed(2)}★` : "—",
+                sub: w7.length ? `${w7.length} reviews this week` : "no data yet" },
+            ];
+
+        const extraKpis = isPlay
+          ? [{ label:"Needs Reply", value: needsReply, sub:"≤2★ unanswered" }]
+          : [{ label:"App Version", value: pd.stats?.version ?? "—", sub:"current" }];
+
+        const displayRevs = allRevs.slice(0, reviewLimit).map(r => ({
+          id: r.id, stars: r.stars, author: r.author, title: r.title||"",
+          text: r.text, replied: r.replied,
+          time: new Date(r.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
+        }));
+        const canMore = reviewLimit < Math.min(allRevs.length, maxLimit);
+
+        const cardStyle = {background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"};
+        const labelS = {fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8};
+        const valS   = {fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1};
+        const subS   = {fontSize:12,color:"#8B949E",marginTop:5};
+
         return (
           <div>
-            {/* KPI cards */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
-              {kpis.map(card => (
-                <div key={card.label} style={{background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"}}>
-                  <div style={{fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8}}>{card.label}</div>
-                  <div style={{fontSize:26,fontWeight:700,color:"#1F2328",lineHeight:1}}>{card.value}</div>
-                  <div style={{fontSize:12,color:"#8B949E",marginTop:5}}>{card.sub}</div>
+            {/* Unified KPI row */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:extraKpis.length?8:16}}>
+              {unifiedKpis.map(c=>(
+                <div key={c.label} style={cardStyle}>
+                  <div style={labelS}>{c.label}</div>
+                  <div style={valS}>{c.value}</div>
+                  <div style={subS}>{c.sub}</div>
                 </div>
               ))}
             </div>
+            {/* Platform-specific extras row */}
+            {extraKpis.length > 0 && (
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16}}>
+                {extraKpis.map(c=>(
+                  <div key={c.label} style={cardStyle}>
+                    <div style={labelS}>{c.label}</div>
+                    <div style={valS}>{c.value}</div>
+                    <div style={subS}>{c.sub}</div>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Recent reviews */}
             <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
               <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-                <span style={{fontSize:12,color:"#8B949E"}}>Synced every 15 min · most recent first</span>
+                <span style={{fontSize:12,color:"#8B949E"}}>Most recent first</span>
               </div>
               {displayRevs.length===0 && <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>No reviews available</div>}
               {displayRevs.map((r,i) => (
-                <div key={r.id} style={{padding:"12px 20px",borderBottom:i<displayRevs.length-1?"1px solid #F8F8F8":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
+                <div key={r.id} style={{padding:"12px 20px",borderBottom:"1px solid #F8F8F8",display:"flex",gap:12,alignItems:"flex-start"}}>
                   <div style={{flexShrink:0,paddingTop:2}}><StarRating stars={r.stars} size={11}/></div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3,flexWrap:"wrap"}}>
@@ -1441,6 +1496,14 @@ function AnalyticsSection({ tpKey }) {
                   <div style={{fontSize:11,color:"#C0C0C0",flexShrink:0,paddingTop:2}}>{r.time}</div>
                 </div>
               ))}
+              {canMore && (
+                <div style={{padding:"12px 20px",borderTop:"1px solid #F3F4F6",textAlign:"center"}}>
+                  <button onClick={()=>setReviewLimit(l=>Math.min(l+10,maxLimit))}
+                    style={{background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>
+                    See 10 more · showing {reviewLimit} of {Math.min(allRevs.length,maxLimit)}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         );
