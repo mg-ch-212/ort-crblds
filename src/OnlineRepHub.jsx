@@ -1265,6 +1265,7 @@ function ResourcesSection() {
     { label:"Amplitude",                   url:"https://app.amplitude.com/analytics/trading212/home",                  domain:"amplitude.com" },
     { label:"Social Moderation",            url:"https://app.amplitude.com/analytics/trading212/dashboard/50xw74vq",    domain:"amplitude.com" },
     { label:"Marqeta",                     url:"https://app.marqeta.com",                                               domain:"marqeta.com" },
+    { label:"Zendesk",                     url:"https://trading2129704.zendesk.com/agent/search/1",                     domain:"zendesk.com" },
   ];
 
   const sheets = [
