@@ -1186,7 +1186,7 @@ function SchedExportScreenshot({ schedule, monthLabel }) {
       const scale=2,colW=110,nameW=150,rowH=30,weekHdrH=34,pad=24;
       const width=nameW+7*colW+pad*2;
       const weekBlockH=weekHdrH+TEAM.length*rowH+8;
-      const legendH=44;
+      const legendH=62;
       const height=legendH+schedule.length*(weekBlockH+14)+28;
       const c=document.createElement("canvas");c.width=width*scale;c.height=height*scale;
       const ctx=c.getContext("2d");ctx.scale(scale,scale);
