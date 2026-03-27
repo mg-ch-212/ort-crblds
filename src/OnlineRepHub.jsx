@@ -957,7 +957,7 @@ function PinModal({ onUnlock }) {
         <div style={{width:52,height:52,background:"linear-gradient(135deg,#0D1117,#1C2333)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto 20px"}}>📋</div>
         <div style={{fontSize:19,fontWeight:700,color:"#1F2328",marginBottom:4}}>ORT Battleground</div>
         <div style={{fontSize:13,color:"#8B949E",marginBottom:28}}>Enter your team PIN to continue</div>
-        <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} placeholder="••••" maxLength={12} autoFocus
+        <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} placeholder="••••" maxLength={50} autoFocus
           style={{width:"100%",border:`2px solid ${error?"#FECACA":"#E1E4E8"}`,borderRadius:10,padding:"12px 14px",fontSize:18,letterSpacing:6,textAlign:"center",fontFamily:"inherit",outline:"none",background:error?"#FEF2F2":"#F6F8FA",boxSizing:"border-box",marginBottom:12,transition:"border-color 0.2s",color:"#1F2328"}}/>
         {error&&<div style={{fontSize:12,color:"#DC2626",marginBottom:12}}>Incorrect PIN — try again</div>}
         <button onClick={attempt} disabled={!pin} style={{width:"100%",background:pin?"#00B67A":"#E5E7EB",color:pin?"#FFF":"#9CA3AF",border:"none",borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:pin?"pointer":"default",fontFamily:"inherit"}}>Unlock</button>
