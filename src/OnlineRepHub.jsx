@@ -301,10 +301,12 @@ export default function SocialMediaHub() {
   const inputStyle = { width:"100%", border:"1px solid #D0D7DE", borderRadius:8, padding:"10px 12px", fontSize:13, fontFamily:"inherit", outline:"none", background:"#F6F8FA", boxSizing:"border-box" };
 
   const navItems = [
-    { id:"templates", icon:"💬", label:"Templates" },
+    { id:"templates",   icon:"💬", label:"Templates" },
     ...(ghPat ? [{ id:"pending", icon:"📥", label:"Pending Items", badge:pendingCount }] : []),
-    { id:"schedule",  icon:"📅", label:"Schedule" },
-    { id:"resources", icon:"🔗", label:"Resources", soon:true },
+    { id:"schedule",    icon:"📅", label:"Schedule" },
+    { id:"analytics",   icon:"📊", label:"Analytics",        soon:true },
+    { id:"performance", icon:"🏆", label:"Team Performance", soon:true },
+    { id:"resources",   icon:"🔗", label:"Resources",        soon:true },
   ];
 
   return (
@@ -539,6 +541,24 @@ export default function SocialMediaHub() {
 
           {/* ══ SCHEDULE SECTION ══ */}
           {activeSection==="schedule" && <ScheduleSection />}
+
+          {/* ══ ANALYTICS SECTION ══ */}
+          {activeSection==="analytics" && (
+            <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
+              <div style={{fontSize:40,marginBottom:16}}>📊</div>
+              <div style={{fontSize:17,fontWeight:700,color:"#1F2328",marginBottom:8}}>Analytics</div>
+              <div style={{fontSize:13,color:"#8B949E",maxWidth:380,margin:"0 auto",lineHeight:1.6}}>Trustpilot, App Store, Google Play, Google Maps and social media performance — coming soon.</div>
+            </div>
+          )}
+
+          {/* ══ TEAM PERFORMANCE SECTION ══ */}
+          {activeSection==="performance" && (
+            <div style={{background:"#FFF",borderRadius:12,padding:"48px 24px",border:"1px solid #E1E4E8",textAlign:"center"}}>
+              <div style={{fontSize:40,marginBottom:16}}>🏆</div>
+              <div style={{fontSize:17,fontWeight:700,color:"#1F2328",marginBottom:8}}>Team Performance</div>
+              <div style={{fontSize:13,color:"#8B949E",maxWidth:380,margin:"0 auto",lineHeight:1.6}}>Agent stats, response goals and individual performance tracking — coming soon.</div>
+            </div>
+          )}
 
           {/* ══ RESOURCES SECTION ══ */}
           {activeSection==="resources" && (
