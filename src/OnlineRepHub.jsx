@@ -8,7 +8,10 @@ const REPO_NAME  = "ort-crblds";
 const FILE_PATH  = "templates.json";
 const RAW_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-const STORES_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/analytics-stores.json`;
+const STORES_URL     = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/analytics-stores.json`;
+const SCHED_PATH     = "schedules.json";
+const SCHED_API      = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${SCHED_PATH}`;
+const SCHED_RAW_URL  = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${SCHED_PATH}`;
 const APP_PIN    = "8XGc-DyH4eRzG5oj7h-Y3C0T";
 
 // Trustpilot — Business Unit ID is public (same as a domain name)
@@ -250,6 +253,25 @@ async function commitFile(current, sha, message, pat) {
     body: JSON.stringify({ message, content: encoded, sha })
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.message === "Not Found" ? "Write access denied — use the shared team token (🔑)." : (e.message || "Failed to save.")); }
+}
+async function getSchedFileAndSha(pat) {
+  const res = await fetch(SCHED_API, { headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json" } });
+  if (res.status === 404) return { sha: null, current: { months: {} } };
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+  const d = await res.json();
+  const raw = atob(d.content.replace(/\n/g,""));
+  return { sha: d.sha, current: JSON.parse(new TextDecoder("utf-8").decode(Uint8Array.from(raw, c => c.charCodeAt(0)))) };
+}
+async function commitSchedFile(current, sha, message, pat) {
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2))));
+  const body = { message, content: encoded };
+  if (sha) body.sha = sha;
+  const res = await fetch(SCHED_API, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message || "Failed to save schedule."); }
 }
 async function submitToGitHub(d, pat) {
   const { sha, current } = await getFileAndSha(pat);
@@ -656,7 +678,7 @@ export default function SocialMediaHub() {
           })()}
 
           {/* ══ SCHEDULE SECTION ══ */}
-          {activeSection==="schedule" && <ScheduleSection />}
+          {activeSection==="schedule" && <ScheduleSection ghPat={ghPat} />}
 
           {/* ══ ANALYTICS SECTION ══ */}
           {activeSection==="analytics" && <AnalyticsSection tpKey={tpKey} />}
@@ -693,83 +715,148 @@ export default function SocialMediaHub() {
 // ═══════════════════════════════════════════════
 //  SCHEDULE SECTION
 // ═══════════════════════════════════════════════
-function ScheduleSection() {
+function ScheduleSection({ ghPat }) {
   const now = new Date();
   const [selectedYear,  setSelectedYear]  = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [pattern,       setPattern]       = useState("Rotation 1");
   const [schedule,      setSchedule]      = useState(null);
   const [savedMonths,   setSavedMonths]   = useState({});
+  const [allSchedules,  setAllSchedules]  = useState({});
   const [showCreator,   setShowCreator]   = useState(false);
   const [loaded,        setLoaded]        = useState(false);
   const [toast,         setToast]         = useState(null);
   const saveTimer = useRef(null);
 
   const monthLabel = SCHED_MONTHS[selectedMonth] + " " + selectedYear;
+  const parseWeeks = (w) => w.map(wk => ({ ...wk, days: wk.days.map(d => d ? new Date(d) : null) }));
+  const serializeWeeks = (w) => w.map(wk => ({ ...wk, days: wk.days.map(d => d ? d.toISOString() : null) }));
 
+  // ── initial load ───────────────────────────────
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("ort-schedule-index");
-      if (raw) {
-        const index = JSON.parse(raw);
-        setSavedMonths(index);
-        const keys = Object.keys(index).sort();
-        if (keys.length > 0) {
-          const latest = keys[keys.length - 1];
-          const [y, m] = latest.split("-").map(Number);
-          setSelectedYear(y); setSelectedMonth(m);
-          const data = localStorage.getItem("ort-schedule:" + latest);
-          if (data) setSchedule(JSON.parse(data).map(w => ({ ...w, days: w.days.map(d => d ? new Date(d) : null) })));
+    const load = async () => {
+      // Try GitHub CDN first (all users, no auth needed)
+      try {
+        const res = await fetch(`${SCHED_RAW_URL}?_=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          const months = data.months || {};
+          const index = {}, parsed = {};
+          for (const [k, v] of Object.entries(months)) {
+            index[k] = v.label || k;
+            parsed[k] = parseWeeks(v.weeks || []);
+          }
+          setAllSchedules(parsed); setSavedMonths(index);
+          const keys = Object.keys(index).sort();
+          if (keys.length > 0) {
+            const latest = keys[keys.length - 1];
+            const [y, m] = latest.split("-").map(Number);
+            setSelectedYear(y); setSelectedMonth(m);
+            setSchedule(parsed[latest]);
+          }
+          setLoaded(true);
+          return;
         }
-      }
-    } catch(e) {}
-    setLoaded(true);
-  }, []);
+      } catch(e) {}
+      // Fallback: localStorage (first time or file not yet on GitHub)
+      try {
+        const raw = localStorage.getItem("ort-schedule-index");
+        if (raw) {
+          const index = JSON.parse(raw);
+          const parsed = {};
+          for (const k of Object.keys(index)) {
+            const d = localStorage.getItem("ort-schedule:" + k);
+            if (d) parsed[k] = parseWeeks(JSON.parse(d));
+          }
+          setAllSchedules(parsed); setSavedMonths(index);
+          const keys = Object.keys(index).sort();
+          if (keys.length > 0) {
+            const latest = keys[keys.length - 1];
+            const [y, m] = latest.split("-").map(Number);
+            setSelectedYear(y); setSelectedMonth(m);
+            setSchedule(parsed[latest]);
+          }
+          // Auto-migrate: push all local months to GitHub if PAT is available
+          if (ghPat && Object.keys(parsed).length > 0) {
+            (async () => {
+              try {
+                const { sha, current } = await getSchedFileAndSha(ghPat);
+                current.months = current.months || {};
+                for (const k of Object.keys(parsed)) {
+                  current.months[k] = { label: index[k] || k, weeks: serializeWeeks(parsed[k]) };
+                }
+                await commitSchedFile(current, sha, "Sync local schedules to GitHub", ghPat);
+                setToast("✓ Schedules synced to GitHub — team can now see them");
+              } catch(e) { console.error("Auto-sync failed:", e.message); }
+            })();
+          }
+        }
+      } catch(e) {}
+      setLoaded(true);
+    };
+    load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveSchedule = useCallback((sched, year, month, months) => {
-    const key = "ort-schedule:" + year + "-" + month;
-    const serializable = sched.map(w => ({ ...w, days: w.days.map(d => d ? d.toISOString() : null) }));
-    try {
-      localStorage.setItem(key, JSON.stringify(serializable));
-      const newIndex = { ...(months || savedMonths), [year+"-"+month]: SCHED_MONTHS[month]+" "+year };
-      localStorage.setItem("ort-schedule-index", JSON.stringify(newIndex));
-      setSavedMonths(newIndex);
-      return true;
-    } catch(e) { return false; }
-  }, [savedMonths]);
+  // ── save (GitHub + localStorage cache) ─────────
+  const saveSchedule = useCallback(async (sched, year, month) => {
+    const key = year + "-" + month;
+    const label = SCHED_MONTHS[month] + " " + year;
+    const serializable = serializeWeeks(sched);
+    setAllSchedules(prev => ({ ...prev, [key]: sched }));
+    setSavedMonths(prev => {
+      const next = { ...prev, [key]: label };
+      try { localStorage.setItem("ort-schedule-index", JSON.stringify(next)); } catch(e) {}
+      return next;
+    });
+    try { localStorage.setItem("ort-schedule:" + key, JSON.stringify(serializable)); } catch(e) {}
+    if (ghPat) {
+      try {
+        const { sha, current } = await getSchedFileAndSha(ghPat);
+        current.months = current.months || {};
+        current.months[key] = { label, weeks: serializable };
+        await commitSchedFile(current, sha, `Update schedule: ${label}`, ghPat);
+      } catch(e) { console.error("Schedule sync failed:", e.message); return false; }
+    }
+    return true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ghPat]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const sched = generateSchedule(selectedYear, selectedMonth, pattern);
     setSchedule(sched);
-    const ok = saveSchedule(sched, selectedYear, selectedMonth, savedMonths);
-    setToast(ok ? "✓ " + SCHED_MONTHS[selectedMonth] + " " + selectedYear + " created & saved" : "⚠ Created but save failed");
+    const ok = await saveSchedule(sched, selectedYear, selectedMonth);
+    setToast(ok
+      ? "✓ " + SCHED_MONTHS[selectedMonth] + " " + selectedYear + " created" + (ghPat ? " & synced" : " (local — add token in 🔑 to share)")
+      : "⚠ Created but sync failed");
     setShowCreator(false);
   };
 
   const handleLoadMonth = (key) => {
     const [y, m] = key.split("-").map(Number);
     setSelectedYear(y); setSelectedMonth(m);
-    try {
-      const data = localStorage.getItem("ort-schedule:" + key);
-      if (data) setSchedule(JSON.parse(data).map(w => ({ ...w, days: w.days.map(d => d ? new Date(d) : null) })));
-    } catch(e) { setSchedule(generateSchedule(y, m, pattern)); }
+    setSchedule(allSchedules[key] || generateSchedule(y, m, pattern));
   };
 
-  const handleDeleteMonth = (key) => {
-    try {
-      localStorage.removeItem("ort-schedule:" + key);
-      const newIndex = { ...savedMonths }; delete newIndex[key];
-      localStorage.setItem("ort-schedule-index", JSON.stringify(newIndex));
-      setSavedMonths(newIndex);
-      if (selectedYear+"-"+selectedMonth === key) setSchedule(null);
-      setToast("✓ Deleted");
-    } catch(e) { setToast("⚠ Delete failed"); }
+  const handleDeleteMonth = async (key) => {
+    const newAll = { ...allSchedules }; delete newAll[key];
+    const newIndex = { ...savedMonths }; delete newIndex[key];
+    setAllSchedules(newAll); setSavedMonths(newIndex);
+    if (selectedYear + "-" + selectedMonth === key) setSchedule(null);
+    try { localStorage.removeItem("ort-schedule:" + key); localStorage.setItem("ort-schedule-index", JSON.stringify(newIndex)); } catch(e) {}
+    if (ghPat) {
+      try {
+        const { sha, current } = await getSchedFileAndSha(ghPat);
+        if (current.months) delete current.months[key];
+        await commitSchedFile(current, sha, `Delete schedule: ${savedMonths[key] || key}`, ghPat);
+        setToast("✓ Deleted");
+      } catch(e) { setToast("⚠ Deleted locally, sync failed"); }
+    } else { setToast("✓ Deleted"); }
   };
 
   const handleScheduleUpdate = (s) => {
     setSchedule(s);
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveSchedule(s, selectedYear, selectedMonth, savedMonths), 800);
+    saveTimer.current = setTimeout(() => saveSchedule(s, selectedYear, selectedMonth), 800);
   };
 
   if (!loaded) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"40vh",color:"#8B949E",fontFamily:"inherit"}}>Loading schedules…</div>;
