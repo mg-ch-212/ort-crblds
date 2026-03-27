@@ -10,6 +10,10 @@ const RAW_URL    = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}
 const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 const APP_PIN    = "8XGc-DyH4eRzG5oj7h-Y3C0T";
 
+// Trustpilot — Business Unit ID is public (same as a domain name)
+const TP_BU_ID  = "5a0e1b590000ff0005b0acd9";
+const TP_API    = `https://api.trustpilot.com/v1/business-units/${TP_BU_ID}`;
+
 // ═══════════════════════════════════════════════
 //  SCHEDULE CONSTANTS
 // ═══════════════════════════════════════════════
@@ -200,6 +204,7 @@ export default function SocialMediaHub() {
   const [loading, setLoading]                   = useState(true);
   const [fetchError, setFetchError]             = useState(null);
   const [ghPat, setGhPat]                       = useState(() => localStorage.getItem("ort_gh_pat") || "");
+  const [tpKey, setTpKey]                       = useState(() => localStorage.getItem("ort_tp_key") || "");
   const [unlocked, setUnlocked]                 = useState(() => sessionStorage.getItem("ort_unlocked") === "1");
   const [allTemplates, setAllTemplates]         = useState([]);
   const [categories, setCategories]             = useState([]);
@@ -211,7 +216,8 @@ export default function SocialMediaHub() {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const savePat = (p) => { setGhPat(p); p ? localStorage.setItem("ort_gh_pat", p) : localStorage.removeItem("ort_gh_pat"); };
+  const savePat   = (p) => { setGhPat(p); p ? localStorage.setItem("ort_gh_pat", p) : localStorage.removeItem("ort_gh_pat"); };
+  const saveTpKey = (k) => { setTpKey(k); k ? localStorage.setItem("ort_tp_key", k) : localStorage.removeItem("ort_tp_key"); };
 
   const loadData = useCallback(async () => {
     try {
@@ -350,8 +356,8 @@ export default function SocialMediaHub() {
             </div>
           </nav>
           <div style={{padding:"12px 10px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-            <button onClick={()=>setShowSettings(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:9,padding:"9px 10px",background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,cursor:"pointer",fontFamily:"inherit",color:ghPat?"#00B67A":"#57606A",fontSize:12,textAlign:"left"}}>
-              <span>🔑</span><span>{ghPat?"Token active":"Set GitHub token"}</span>
+            <button onClick={()=>setShowSettings(true)} style={{width:"100%",display:"flex",alignItems:"center",gap:9,padding:"9px 10px",background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,cursor:"pointer",fontFamily:"inherit",color:(ghPat||tpKey)?"#00B67A":"#57606A",fontSize:12,textAlign:"left"}}>
+              <span>🔑</span><span>{ghPat&&tpKey?"All tokens set":ghPat?"GitHub token set":tpKey?"Trustpilot key set":"API keys"}</span>
             </button>
           </div>
         </div>
@@ -573,7 +579,7 @@ export default function SocialMediaHub() {
         </div>
       </div>
 
-      {showSettings && <PATSettingsModal currentPat={ghPat} onSave={(p)=>{savePat(p);setShowSettings(false);}} onClose={()=>setShowSettings(false)} />}
+      {showSettings && <SettingsModal currentPat={ghPat} currentTpKey={tpKey} onSave={({pat,tpKey:tk})=>{savePat(pat);saveTpKey(tk);setShowSettings(false);}} onClose={()=>setShowSettings(false)} />}
       {showAddModal && <AddTemplateModal categories={categories.map(c=>c.name)} onSave={async(t)=>{await submitToGitHub(t,ghPat);setShowAddModal(false);}} onClose={()=>setShowAddModal(false)} />}
       {editingTemplate && <AddTemplateModal categories={categories.map(c=>c.name)} initialData={editingTemplate} onSave={async(t)=>{await editTemplateOnGitHub(editingTemplate.id,t,ghPat);setEditingTemplate(null);}} onClose={()=>setEditingTemplate(null)} />}
     </div>
@@ -1056,25 +1062,50 @@ function PinModal({ onUnlock }) {
 }
 
 // ═══════════════════════════════════════════════
-//  PAT SETTINGS MODAL
+//  SETTINGS MODAL
 // ═══════════════════════════════════════════════
-function PATSettingsModal({ currentPat, onSave, onClose }) {
-  const [pat,setPat]=useState(currentPat);
+function SettingsModal({ currentPat, currentTpKey, onSave, onClose }) {
+  const [pat,  setPat]  = useState(currentPat);
+  const [tpKey,setTpKey] = useState(currentTpKey);
+  const iS = {width:"100%",border:"1px solid #D0D7DE",borderRadius:8,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#F6F8FA",boxSizing:"border-box"};
+  const lS = {fontSize:12,fontWeight:600,color:"#1F2328",marginBottom:6,display:"block"};
+  const hintS = {fontSize:12,color:"#57606A",background:"#F6F8FA",borderRadius:8,padding:"10px 12px",lineHeight:1.6};
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:460}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#FFF",borderRadius:16,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto"}}>
         <div style={{padding:"20px 24px 16px",borderBottom:"1px solid #E1E4E8",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div><div style={{fontSize:17,fontWeight:700,color:"#1F2328"}}>🔑 GitHub Token</div><div style={{fontSize:12,color:"#8B949E",marginTop:2}}>Required to submit, edit, approve or delete templates.</div></div>
+          <div><div style={{fontSize:17,fontWeight:700,color:"#1F2328"}}>🔑 API Keys</div><div style={{fontSize:12,color:"#8B949E",marginTop:2}}>Stored in your browser only — never sent anywhere except the respective API.</div></div>
           <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#8B949E",padding:4}}>✕</button>
         </div>
-        <div style={{padding:"20px 24px"}}>
-          <label style={{fontSize:12,fontWeight:600,color:"#1F2328",marginBottom:6,display:"block"}}>Personal Access Token (classic)</label>
-          <input type="password" value={pat} onChange={e=>setPat(e.target.value)} placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-            style={{width:"100%",border:"1px solid #D0D7DE",borderRadius:8,padding:"10px 12px",fontSize:13,fontFamily:"inherit",outline:"none",background:"#F6F8FA",boxSizing:"border-box",marginBottom:12}}/>
-          <div style={{fontSize:12,color:"#57606A",background:"#F6F8FA",borderRadius:8,padding:"10px 12px",marginBottom:20,lineHeight:1.6}}>Generate at <strong>github.com/settings/tokens</strong> → Classic token → tick <strong>repo</strong> scope.</div>
-          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-            {currentPat&&<button onClick={()=>onSave("")} style={{background:"#FEF2F2",color:"#DC2626",border:"1px solid #FECACA",borderRadius:8,padding:"9px 16px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Remove token</button>}
-            <button onClick={()=>onSave(pat.trim())} disabled={!pat.trim()} style={{background:pat.trim()?"#00B67A":"#E5E7EB",color:pat.trim()?"#FFF":"#9CA3AF",border:"none",borderRadius:8,padding:"9px 20px",fontSize:13,fontWeight:600,cursor:pat.trim()?"pointer":"default",fontFamily:"inherit"}}>Save token</button>
+        <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:24}}>
+
+          {/* GitHub PAT */}
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#1F2328",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:16}}>🐙</span> GitHub Token
+              {pat.trim() && <span style={{fontSize:10,background:"#DCFCE7",color:"#166534",padding:"1px 6px",borderRadius:4,fontWeight:600}}>SET</span>}
+            </div>
+            <label style={lS}>Personal Access Token (classic)</label>
+            <input type="password" value={pat} onChange={e=>setPat(e.target.value)} placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style={{...iS,marginBottom:8}}/>
+            <div style={hintS}>Generate at <strong>github.com/settings/tokens</strong> → Classic token → tick <strong>repo</strong> scope. Required to submit, approve or delete templates.</div>
+          </div>
+
+          <div style={{borderTop:"1px solid #F0F0F0"}}/>
+
+          {/* Trustpilot API Key */}
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#1F2328",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <span style={{fontSize:16}}>⭐</span> Trustpilot API Key
+              {tpKey.trim() && <span style={{fontSize:10,background:"#DCFCE7",color:"#166534",padding:"1px 6px",borderRadius:4,fontWeight:600}}>SET</span>}
+            </div>
+            <label style={lS}>API Key (Consumer Key)</label>
+            <input type="password" value={tpKey} onChange={e=>setTpKey(e.target.value)} placeholder="tpk_xxxxxxxxxxxxxxxxxxxx" style={{...iS,marginBottom:8}}/>
+            <div style={hintS}>From <strong>businessapp.b2b.trustpilot.com → Developers → your app</strong>. Read-only — used for the Analytics tab.</div>
+          </div>
+
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingTop:4}}>
+            <button onClick={onClose} style={{background:"#F6F8FA",color:"#57606A",border:"1px solid #D0D7DE",borderRadius:8,padding:"9px 20px",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+            <button onClick={()=>onSave({pat:pat.trim(),tpKey:tpKey.trim()})} style={{background:"#00B67A",color:"#FFF",border:"none",borderRadius:8,padding:"9px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Save</button>
           </div>
         </div>
       </div>
