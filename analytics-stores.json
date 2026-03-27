@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-27T19:05:37.914Z",
+  "updatedAt": "2026-03-27T19:20:36.807Z",
   "googlePlay": {
-    "updatedAt": "2026-03-27T19:05:37.161Z",
+    "updatedAt": "2026-03-27T19:20:36.051Z",
     "recentReviews": [
       {
         "id": "fbe9b87e-81a7-4239-8d53-795042e3a0e4",
@@ -634,26 +634,18 @@
         "text": "\tno problems so far",
         "createdAt": "2026-03-20T19:40:51.000Z",
         "replied": false
-      },
-      {
-        "id": "bdd8aa85-c6f9-48c7-8914-69763cf8ce4a",
-        "stars": 2,
-        "author": "???? ????????",
-        "text": "\tThere is a problem: some countries are not supported.",
-        "createdAt": "2026-03-20T19:12:05.000Z",
-        "replied": true
       }
     ],
     "stats": {
-      "fetchedCount": 80,
-      "avgRating": "3.89"
+      "fetchedCount": 79,
+      "avgRating": "3.91"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-27T19:05:37.914Z",
+    "updatedAt": "2026-03-27T19:20:36.807Z",
     "stats": {
-      "rating": 4.67849,
-      "ratingCount": 346011,
+      "rating": 4.67845,
+      "ratingCount": 345955,
       "version": "8.23.0"
     },
     "recentReviews": [
