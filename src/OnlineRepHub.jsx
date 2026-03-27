@@ -26,11 +26,11 @@ const TEAM = [
 ];
 const SHIFT_TIMES = ["9:00 - 18:00","9:00 - 17:30","13:30 - 22:00","08:00 - 16:30","10:30 - 18:30","11:00 - 19:30"];
 const OFF_REASONS = [
-  { value: "PTO",           label: "🏖️ PTO",           bg: "#dbeafe", fg: "#1e40af", accent: "#3b82f6", border: "#93c5fd" },
-  { value: "Sick Leave",    label: "🤒 Sick Leave",    bg: "#fce7f3", fg: "#9d174d", accent: "#ec4899", border: "#f9a8d4" },
-  { value: "Holiday",       label: "🎉 Holiday",       bg: "#fef3c7", fg: "#92400e", accent: "#f59e0b", border: "#fcd34d" },
-  { value: "Paid Vacation", label: "✈️ Paid Vacation", bg: "#d1fae5", fg: "#065f46", accent: "#10b981", border: "#6ee7b7" },
-  { value: "Other",         label: "📝 Other",         bg: "#f3e8ff", fg: "#6b21a8", accent: "#a855f7", border: "#c4b5fd" },
+  { value: "PTO",           label: "🏖️ PTO",           bg: "#fff7ed", fg: "#9a3412", accent: "#f97316", border: "#fdba74" },
+  { value: "Sick Leave",    label: "🤒 Sick Leave",    bg: "#ffe4e6", fg: "#9f1239", accent: "#f43f5e", border: "#fda4af" },
+  { value: "Holiday",       label: "🎉 Holiday",       bg: "#fef3c7", fg: "#78350f", accent: "#f59e0b", border: "#fde68a" },
+  { value: "Paid Vacation", label: "✈️ Paid Vacation", bg: "#ccfbf1", fg: "#134e4a", accent: "#0d9488", border: "#5eead4" },
+  { value: "Other",         label: "📝 Other",         bg: "#f3f4f6", fg: "#374151", accent: "#6b7280", border: "#d1d5db" },
 ];
 const OFF_VALUES = OFF_REASONS.map(r => r.value);
 const ROTATION_PATTERNS = {
@@ -73,7 +73,8 @@ function generateSchedule(year, month, pattern) {
         if (di >= 5) return "Weekend";
         return rotation ? rotation[wi % rotation.length][mi] : member.defaultShift;
       })
-    )
+    ),
+    homeOffice: TEAM.map(() => Array(7).fill(false)),
   }));
 }
 function sFmtDate(d) { return d ? `${d.getDate()}` : ""; }
@@ -86,10 +87,12 @@ function getShiftStyle(value) {
   if (value === "Weekend") return { bg: "#f1f5f9", fg: "#94a3b8", accent: null };
   const off = OFF_REASONS.find(r => r.value === value);
   if (off) return { bg: off.bg, fg: off.fg, accent: off.accent };
-  if (value.includes("13:30") || value.includes("22:00")) return { bg: "#ede9fe", fg: "#5b21b6", accent: "#8b5cf6" };
-  if (value.includes("08:00")) return { bg: "#ecfdf5", fg: "#065f46", accent: "#10b981" };
-  if (value.includes("10:30") || value.includes("11:00")) return { bg: "#fff7ed", fg: "#9a3412", accent: "#f97316" };
-  return { bg: "#eff6ff", fg: "#1e40af", accent: "#3b82f6" };
+  // Late shift — violet/purple (evening feel)
+  if (value.includes("13:30") || value.includes("22:00")) return { bg: "#ede9fe", fg: "#4c1d95", accent: "#7c3aed" };
+  // One-off holiday shifts — slate/neutral
+  if (value.includes("10:30") || value.includes("11:00")) return { bg: "#f1f5f9", fg: "#475569", accent: "#64748b" };
+  // All morning shifts (08:00-16:30, 9:00-17:30, 9:00-18:00) — sky blue
+  return { bg: "#e0f2fe", fg: "#075985", accent: "#0ea5e9" };
 }
 function isOffDay(v) { return OFF_VALUES.includes(v); }
 
@@ -830,7 +833,7 @@ function ScheduleSection() {
         <div style={{animation:"fadeIn 0.3s ease"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:12}}>
             <h3 style={{fontSize:20,fontWeight:700,color:"#0f172a",letterSpacing:"-0.03em",margin:0}}>{monthLabel}</h3>
-            <div style={{display:"flex",gap:14}}>{TEAM.map(m=><div key={m.name} style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:"#475569"}}><div style={{width:8,height:8,borderRadius:"50%",background:m.color}}/>{m.name.split(" ")[0]}</div>)}</div>
+            <div style={{display:"flex",gap:14}}>{TEAM.map(m=><div key={m.name} style={{fontSize:12,color:"#475569",fontWeight:500}}>{m.name.split(" ")[0]}</div>)}</div>
           </div>
           <div style={{display:"flex",gap:14,marginBottom:18,flexWrap:"wrap"}}>
             <div style={{flex:1,minWidth:200}}><SchedCoverageBar schedule={schedule}/></div>
@@ -902,7 +905,7 @@ function SchedShiftDropdown({ cellRect, currentValue, onSelect, onClose }) {
   );
 }
 
-function SchedCell({ value, date, isEditing, onStartEdit }) {
+function SchedCell({ value, date, isEditing, isHO, onStartEdit, onHOToggle }) {
   if(!date) return <td style={SS.emptyCell}/>;
   const {bg,fg,accent}=getShiftStyle(value);
   const isWeekend=value==="Weekend";
@@ -910,9 +913,13 @@ function SchedCell({ value, date, isEditing, onStartEdit }) {
   const offInfo=isOff?OFF_REASONS.find(r=>r.value===value):null;
   return (
     <td onClick={e=>{if(!isWeekend)onStartEdit(e.currentTarget.getBoundingClientRect());}}
-      style={{...SS.cell,background:bg,color:fg,borderLeft:accent?`3px solid ${accent}`:"none",cursor:isWeekend?"default":"pointer",outline:isEditing?"2px solid #3b82f6":"none",outlineOffset:-1}}
+      style={{...SS.cell,background:bg,color:fg,borderLeft:accent?`3px solid ${accent}`:"none",cursor:isWeekend?"default":"pointer",outline:isEditing?"2px solid #3b82f6":"none",outlineOffset:-1,position:"relative"}}
       title={isWeekend?"Weekend":"Click to edit"}>
       <span style={{fontSize:"12.5px",fontWeight:500}}>{isOff&&offInfo?`${offInfo.label.split(" ")[0]} ${value}`:value}</span>
+      {!isWeekend&&!isOff&&(
+        <button onClick={e=>{e.stopPropagation();onHOToggle();}} title={isHO?"Remove Home Office":"Mark as Home Office"}
+          style={{position:"absolute",bottom:2,right:2,background:"none",border:"none",cursor:"pointer",fontSize:9,padding:"0 1px",opacity:isHO?1:0.2,lineHeight:1,color:isHO?"#0ea5e9":"inherit"}}>🏠</button>
+      )}
     </td>
   );
 }
@@ -920,6 +927,7 @@ function SchedCell({ value, date, isEditing, onStartEdit }) {
 function SchedGrid({ schedule, setSchedule }) {
   const [editCell, setEditCell] = useState(null);
   const handleShiftChange=(wi,mi,di,val)=>{const u=[...schedule];u[wi]={...u[wi],shifts:u[wi].shifts.map((ms,i)=>i===mi?ms.map((s,j)=>j===di?val:s):ms)};setSchedule(u);};
+  const handleHOToggle=(wi,mi,di)=>{const u=[...schedule];const ho=(u[wi].homeOffice||TEAM.map(()=>Array(7).fill(false))).map((ms,i)=>i===mi?ms.map((v,j)=>j===di?!v:v):ms);u[wi]={...u[wi],homeOffice:ho};setSchedule(u);};
   return (
     <>
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
@@ -943,8 +951,8 @@ function SchedGrid({ schedule, setSchedule }) {
                 <tbody>
                   {TEAM.map((m,mi)=>(
                     <tr key={mi}>
-                      <td style={SS.nameCell}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:8,height:8,borderRadius:"50%",background:m.color,flexShrink:0}}/><span style={{fontSize:"12.5px",fontWeight:600,color:"#1e293b",whiteSpace:"nowrap"}}>{m.name.split(" ")[0]}</span></div></td>
-                      {week.days.map((date,di)=><SchedCell key={di} value={week.shifts[mi][di]} date={date} isEditing={editCell&&editCell.wi===wi&&editCell.mi===mi&&editCell.di===di} onStartEdit={(rect)=>setEditCell({wi,mi,di,rect})}/>)}
+                      <td style={SS.nameCell}><span style={{fontSize:"12.5px",fontWeight:600,color:"#1e293b",whiteSpace:"nowrap"}}>{m.name.split(" ")[0]}</span></td>
+                      {week.days.map((date,di)=><SchedCell key={di} value={week.shifts[mi][di]} date={date} isEditing={editCell&&editCell.wi===wi&&editCell.mi===mi&&editCell.di===di} isHO={(week.homeOffice||[])[mi]?.[di]||false} onStartEdit={(rect)=>setEditCell({wi,mi,di,rect})} onHOToggle={()=>handleHOToggle(wi,mi,di)}/>)}
                     </tr>
                   ))}
                 </tbody>
@@ -967,13 +975,13 @@ function SchedCoverageBar({ schedule }) {
     <div style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:10,padding:14}}>
       <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",color:"#94a3b8",fontWeight:700,marginBottom:10}}>Shift Distribution</div>
       <div style={{display:"flex",height:10,borderRadius:6,overflow:"hidden",background:"#f1f5f9"}}>
-        <div style={{height:"100%",width:`${p("early")}%`,background:"#10b981",borderRadius:"6px 0 0 6px"}}/>
-        <div style={{height:"100%",width:`${p("standard")}%`,background:"#3b82f6"}}/>
-        <div style={{height:"100%",width:`${p("late")}%`,background:"#8b5cf6"}}/>
-        <div style={{height:"100%",width:`${p("off")}%`,background:"#f59e0b",borderRadius:"0 6px 6px 0"}}/>
+        <div style={{height:"100%",width:`${p("early")}%`,background:"#38bdf8",borderRadius:"6px 0 0 6px"}}/>
+        <div style={{height:"100%",width:`${p("standard")}%`,background:"#0ea5e9"}}/>
+        <div style={{height:"100%",width:`${p("late")}%`,background:"#7c3aed"}}/>
+        <div style={{height:"100%",width:`${p("off")}%`,background:"#f97316",borderRadius:"0 6px 6px 0"}}/>
       </div>
       <div style={{display:"flex",gap:14,marginTop:8,fontSize:11,color:"#64748b"}}>
-        {[["early","#10b981"],["standard","#3b82f6"],["late","#8b5cf6"],["off","#f59e0b"]].map(([k,c])=><span key={k}><span style={{width:6,height:6,borderRadius:"50%",display:"inline-block",marginRight:4,background:c}}/>{k.charAt(0).toUpperCase()+k.slice(1)} {p(k)}%</span>)}
+        {[["early","#38bdf8"],["standard","#0ea5e9"],["late","#7c3aed"],["off","#f97316"]].map(([k,c])=><span key={k}><span style={{width:6,height:6,borderRadius:"50%",display:"inline-block",marginRight:4,background:c}}/>{k.charAt(0).toUpperCase()+k.slice(1)} {p(k)}%</span>)}
       </div>
     </div>
   );
@@ -989,7 +997,6 @@ function SchedOffSummary({ schedule }) {
       {TEAM.map(m=>{
         const days=offDays[m.name];if(!Object.keys(days).length)return null;
         return <div key={m.name} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-          <div style={{width:8,height:8,borderRadius:"50%",background:m.color,flexShrink:0}}/>
           <span style={{fontSize:12,fontWeight:600,color:"#1e293b",minWidth:80}}>{m.name.split(" ")[0]}</span>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {Object.entries(days).map(([reason,count])=>{const info=OFF_REASONS.find(r=>r.value===reason);return<span key={reason} style={{fontSize:11,padding:"2px 8px",borderRadius:6,fontWeight:500,background:info?info.bg:"#f1f5f9",color:info?info.fg:"#64748b",border:`1px solid ${info?info.border:"#e2e8f0"}`}}>{info?info.label.split(" ")[0]:""} {reason}: {count}d</span>;})}
@@ -1042,7 +1049,7 @@ function SchedExportScreenshot({ schedule, monthLabel }) {
         ctx.fillStyle="#1e293b";ctx.font="bold 10px sans-serif";ctx.textAlign="left";ctx.fillText("WEEK "+week.weekNum,pad+10,y+18);
         SCHED_DAYS.forEach((day,di)=>{const x=pad+nameW+di*colW;ctx.fillStyle=week.days[di]?"#64748b":"#cbd5e1";ctx.font="600 9px sans-serif";ctx.textAlign="center";ctx.fillText(day.slice(0,3).toUpperCase(),x+colW/2,y+12);if(week.days[di]){ctx.fillStyle="#0f172a";ctx.font="bold 13px sans-serif";ctx.fillText(String(week.days[di].getDate()),x+colW/2,y+26);}});
         const ry0=y+weekHdrH;
-        TEAM.forEach((member,mi)=>{const ry=ry0+mi*rowH;ctx.fillStyle=member.color;ctx.beginPath();ctx.arc(pad+14,ry+rowH/2,4,0,Math.PI*2);ctx.fill();ctx.fillStyle="#1e293b";ctx.font="600 11px sans-serif";ctx.textAlign="left";ctx.fillText(member.name.split(" ")[0],pad+24,ry+rowH/2+4);
+        TEAM.forEach((member,mi)=>{const ry=ry0+mi*rowH;ctx.fillStyle="#1e293b";ctx.font="600 11px sans-serif";ctx.textAlign="left";ctx.fillText(member.name.split(" ")[0],pad+10,ry+rowH/2+4);
           week.shifts[mi].forEach((shift,di)=>{if(!shift&&!week.days[di])return;const x=pad+nameW+di*colW;const st=getShiftStyle(shift);ctx.fillStyle=st.bg;ctx.fillRect(x+1,ry+2,colW-2,rowH-4);if(st.accent){ctx.fillStyle=st.accent;ctx.fillRect(x+1,ry+2,3,rowH-4);}ctx.fillStyle=st.fg;ctx.font="500 10.5px sans-serif";ctx.textAlign="center";ctx.fillText(shift||"",x+colW/2,ry+rowH/2+4);});
         });
         y+=blockH+14;
@@ -1128,6 +1135,7 @@ function AnalyticsSection({ tpKey }) {
   const [storeLoading, setStoreLoading] = useState(false);
   const [storeError,   setStoreError]   = useState(null);
   const [reviewLimit,  setReviewLimit]  = useState(10);
+  const [reviewPeriod, setReviewPeriod] = useState("all");
 
   const fetchStores = useCallback(async () => {
     setStoreLoading(true); setStoreError(null);
@@ -1162,6 +1170,7 @@ function AnalyticsSection({ tpKey }) {
   useEffect(() => {
     if (platform === "appstore" || platform === "play") fetchStores();
     setReviewLimit(10);
+    setReviewPeriod("all");
   }, [platform, fetchStores]);
 
   // ── derive display data ──────────────────────────────────
@@ -1185,8 +1194,17 @@ function AnalyticsSection({ tpKey }) {
   const chartData  = range==="24h" ? hourly24h : range==="7d" ? daily7d : daily30d;
   const total5     = Object.values(stats.dist).reduce((a,b)=>a+(b||0),0);
 
+  const filterByPeriod = (revs, period) => {
+    if (period === "all") return revs;
+    const cutoff = period === "today"
+      ? new Date(new Date().setHours(0,0,0,0)).getTime()
+      : Date.now() - ({  "7d":7, "30d":30, "60d":60 }[period] || 0) * 24 * 3600 * 1000;
+    return revs.filter(r => new Date(r.createdAt).getTime() >= cutoff);
+  };
+
+  const tpFiltered = isLive ? filterByPeriod(reviews, reviewPeriod) : [];
   const displayReviews = isLive
-    ? reviews.slice(0, reviewLimit).map(r=>({ id:r.id, stars:r.stars,
+    ? tpFiltered.slice(0, reviewLimit).map(r=>({ id:r.id, stars:r.stars,
         author: r.consumer?.displayName||"Anonymous",
         title:  r.title, text:r.text,
         time:   new Date(r.createdAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}),
@@ -1347,14 +1365,21 @@ function AnalyticsSection({ tpKey }) {
 
         {/* Recent reviews */}
         {(() => {
-          const total = isLive ? reviews.length : MOCK_TP_REVIEWS.length;
           const maxLimit = 50;
-          const canMore = reviewLimit < Math.min(total, maxLimit);
+          const filteredTotal = isLive ? tpFiltered.length : MOCK_TP_REVIEWS.length;
+          const canMore = isLive && reviewLimit < Math.min(filteredTotal, maxLimit);
           return (
             <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
-              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-                <span style={{fontSize:12,color:"#8B949E"}}>{isLive?"Live · most recent first":"Mock data"}</span>
+              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews{isLive?"":" · mock data"}</div>
+                <div style={{display:"flex",gap:3}}>
+                  {["all","today","7d","30d","60d"].map(p=>(
+                    <button key={p} onClick={()=>{setReviewPeriod(p);setReviewLimit(10);}}
+                      style={{padding:"3px 9px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid",borderColor:reviewPeriod===p?"#00B67A":"#D0D7DE",background:reviewPeriod===p?"#F0FDF9":"#FFF",color:reviewPeriod===p?"#059669":"#57606A"}}>
+                      {p==="all"?"All":p}
+                    </button>
+                  ))}
+                </div>
               </div>
               {loading && !liveReviews && (
                 <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>Loading reviews…</div>
@@ -1378,7 +1403,7 @@ function AnalyticsSection({ tpKey }) {
                 <div style={{padding:"12px 20px",borderTop:"1px solid #F3F4F6",textAlign:"center"}}>
                   <button onClick={()=>setReviewLimit(l=>Math.min(l+10,maxLimit))}
                     style={{background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>
-                    See 10 more · showing {reviewLimit} of {Math.min(total,maxLimit)}
+                    See 10 more · showing {reviewLimit} of {Math.min(filteredTotal,maxLimit)}
                   </button>
                 </div>
               )}
@@ -1438,12 +1463,13 @@ function AnalyticsSection({ tpKey }) {
           ? [{ label:"Needs Reply", value: needsReply, sub:"≤2★ unanswered" }]
           : [{ label:"App Version", value: pd.stats?.version ?? "—", sub:"current" }];
 
-        const displayRevs = allRevs.slice(0, reviewLimit).map(r => ({
+        const filteredRevs = filterByPeriod(allRevs, reviewPeriod);
+        const displayRevs = filteredRevs.slice(0, reviewLimit).map(r => ({
           id: r.id, stars: r.stars, author: r.author, title: r.title||"",
           text: r.text, replied: r.replied,
           time: new Date(r.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}),
         }));
-        const canMore = reviewLimit < Math.min(allRevs.length, maxLimit);
+        const canMore = reviewLimit < Math.min(filteredRevs.length, maxLimit);
 
         const cardStyle = {background:"#FFF",borderRadius:12,padding:"16px 18px",border:"1px solid #E1E4E8"};
         const labelS = {fontSize:10,fontWeight:600,color:"#8B949E",textTransform:"uppercase",letterSpacing:0.6,marginBottom:8};
@@ -1476,9 +1502,16 @@ function AnalyticsSection({ tpKey }) {
             )}
             {/* Recent reviews */}
             <div style={{background:"#FFF",borderRadius:12,border:"1px solid #E1E4E8",overflow:"hidden"}}>
-              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{padding:"13px 20px",borderBottom:"1px solid #F3F4F6",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1F2328"}}>Recent reviews</div>
-                <span style={{fontSize:12,color:"#8B949E"}}>Most recent first</span>
+                <div style={{display:"flex",gap:3}}>
+                  {["all","today","7d","30d","60d"].map(p=>(
+                    <button key={p} onClick={()=>{setReviewPeriod(p);setReviewLimit(10);}}
+                      style={{padding:"3px 9px",fontSize:11,fontWeight:500,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid",borderColor:reviewPeriod===p?"#00B67A":"#D0D7DE",background:reviewPeriod===p?"#F0FDF9":"#FFF",color:reviewPeriod===p?"#059669":"#57606A"}}>
+                      {p==="all"?"All":p}
+                    </button>
+                  ))}
+                </div>
               </div>
               {displayRevs.length===0 && <div style={{padding:"32px",textAlign:"center",color:"#8B949E",fontSize:13}}>No reviews available</div>}
               {displayRevs.map((r,i) => (
@@ -1500,7 +1533,7 @@ function AnalyticsSection({ tpKey }) {
                 <div style={{padding:"12px 20px",borderTop:"1px solid #F3F4F6",textAlign:"center"}}>
                   <button onClick={()=>setReviewLimit(l=>Math.min(l+10,maxLimit))}
                     style={{background:"#F6F8FA",border:"1px solid #D0D7DE",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit",color:"#57606A"}}>
-                    See 10 more · showing {reviewLimit} of {Math.min(allRevs.length,maxLimit)}
+                    See 10 more · showing {reviewLimit} of {Math.min(filteredRevs.length,maxLimit)}
                   </button>
                 </div>
               )}
