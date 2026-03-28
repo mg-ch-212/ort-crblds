@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-28T07:35:41.891Z",
+  "updatedAt": "2026-03-28T07:50:38.825Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T07:35:41.265Z",
+    "updatedAt": "2026-03-28T07:50:37.930Z",
     "recentReviews": [
       {
         "id": "2ca04b57-3186-48ea-ae56-e8566bab23eb",
@@ -650,23 +650,15 @@
         "text": "\tWhen I started using this application, its simplicity and clarity were an advantage. But in the roughly 14 months of use, the user interface (including functionality) has changed so many times that it actually detracts from the clarity and user experience. The latest update with the drop-down list is a good example of this.",
         "createdAt": "2026-03-21T08:11:09.000Z",
         "replied": true
-      },
-      {
-        "id": "1788148c-fc62-4408-8cb9-a02b8835c7d3",
-        "stars": 5,
-        "author": "Sporty",
-        "text": "\t1.) Long-term investing: ++Simple and logical operation. ++Use a daily (!) savings plan to buy my favorites at an average price. Only a few providers offer this so far (IBKR, Robinhood) --Moderate spreads but unfortunately additional USD exchange rate costs. 2.) Shorter-term trading: --I'm not currently using this here. Please also offer the option of account management in USD for CFDs, so that currency fees aren't charged on every trade of US stocks.",
-        "createdAt": "2026-03-21T07:43:31.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 82,
-      "avgRating": "3.80"
+      "fetchedCount": 81,
+      "avgRating": "3.79"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T07:35:41.891Z",
+    "updatedAt": "2026-03-28T07:50:38.825Z",
     "stats": {
       "rating": 4.67849,
       "ratingCount": 346011,
