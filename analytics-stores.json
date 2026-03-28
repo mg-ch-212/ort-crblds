@@ -1,8 +1,16 @@
 {
-  "updatedAt": "2026-03-28T18:50:36.611Z",
+  "updatedAt": "2026-03-28T19:05:36.750Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T18:50:35.920Z",
+    "updatedAt": "2026-03-28T19:05:35.730Z",
     "recentReviews": [
+      {
+        "id": "a77dae62-9ccd-4c0f-89d8-ba46bdd60e0d",
+        "stars": 5,
+        "author": "Tefik B",
+        "text": "\tSo far, I'm extremely satisfied! Very clear and informative... The only drawback is that the Pies are only available in English. Perhaps a German translation would be great, especially since this app is also being presented in Germany.",
+        "createdAt": "2026-03-28T19:01:41.000Z",
+        "replied": false
+      },
       {
         "id": "f6211a5f-367e-48ee-889a-df9cddf84221",
         "stars": 5,
@@ -653,15 +661,15 @@
       }
     ],
     "stats": {
-      "fetchedCount": 81,
-      "avgRating": "3.84"
+      "fetchedCount": 82,
+      "avgRating": "3.85"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T18:50:36.611Z",
+    "updatedAt": "2026-03-28T19:05:36.749Z",
     "stats": {
-      "rating": 4.67854,
-      "ratingCount": 346173,
+      "rating": 4.67855,
+      "ratingCount": 346222,
       "version": "8.23.0"
     },
     "recentReviews": [
