@@ -1,8 +1,16 @@
 {
-  "updatedAt": "2026-03-28T00:05:40.606Z",
+  "updatedAt": "2026-03-28T00:20:37.541Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T00:05:39.316Z",
+    "updatedAt": "2026-03-28T00:20:36.442Z",
     "recentReviews": [
+      {
+        "id": "5299ddeb-1c73-463d-b70d-6183c059ced1",
+        "stars": 1,
+        "author": "Rainer L.",
+        "text": "\tThe app is completely unusable. On two Android devices, after entering a username and password, it prompts for video identification and then aborts the process with the message that it cannot continue the identification \"due to the information provided.\" However, I didn't provide any information and wasn't asked to. Access works on my computer. However, there's no support information anywhere. Utter garbage.",
+        "createdAt": "2026-03-28T00:11:22.000Z",
+        "replied": false
+      },
       {
         "id": "82d606b3-d25b-42ef-8553-b8dd6fdf1b85",
         "stars": 1,
@@ -637,12 +645,12 @@
       }
     ],
     "stats": {
-      "fetchedCount": 79,
-      "avgRating": "3.86"
+      "fetchedCount": 80,
+      "avgRating": "3.83"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T00:05:40.606Z",
+    "updatedAt": "2026-03-28T00:20:37.541Z",
     "stats": {
       "rating": 4.67845,
       "ratingCount": 345955,
