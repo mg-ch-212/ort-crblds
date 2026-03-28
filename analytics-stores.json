@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-28T15:20:37.903Z",
+  "updatedAt": "2026-03-28T15:35:38.609Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T15:20:37.079Z",
+    "updatedAt": "2026-03-28T15:35:37.825Z",
     "recentReviews": [
       {
         "id": "d52cf811-f084-4ad6-997a-f08076c4da7f",
@@ -650,13 +650,22 @@
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T15:20:37.903Z",
+    "updatedAt": "2026-03-28T15:35:38.609Z",
     "stats": {
       "rating": 4.67854,
       "ratingCount": 346173,
       "version": "8.23.0"
     },
     "recentReviews": [
+      {
+        "id": "13889954235",
+        "stars": 5,
+        "author": "1234paddy g",
+        "title": "Yasir",
+        "text": "Very good platform very easy to use especially fantastic",
+        "createdAt": "2026-03-26T11:56:44-07:00",
+        "replied": false
+      },
       {
         "id": "13882583083",
         "stars": 1,
@@ -1087,15 +1096,6 @@
         "title": "User friendly",
         "text": "Straightforward and easy to use",
         "createdAt": "2026-03-04T22:28:07-07:00",
-        "replied": false
-      },
-      {
-        "id": "13814385237",
-        "stars": 3,
-        "author": "Oliver H99",
-        "title": "Why every update change UI so much",
-        "text": "Ever since I got the app every update has changed the UI-specifically the CFD part, why get rid of the pie chart of asset allocation ? Why is not every order categorised under the stock and now it?s all separate. So many changes that seem so unusual. Is there anyway we can revert updates or edit the user interface by our personal choice ?",
-        "createdAt": "2026-03-04T15:26:05-07:00",
         "replied": false
       }
     ]
