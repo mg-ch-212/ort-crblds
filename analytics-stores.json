@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-03-28T14:50:36.644Z",
+  "updatedAt": "2026-03-28T15:05:41.882Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T14:50:35.908Z",
+    "updatedAt": "2026-03-28T15:05:40.822Z",
     "recentReviews": [
       {
         "id": "d52cf811-f084-4ad6-997a-f08076c4da7f",
@@ -642,23 +642,15 @@
         "text": "\tgreat app for investing!",
         "createdAt": "2026-03-21T20:36:41.000Z",
         "replied": false
-      },
-      {
-        "id": "b93793bf-5103-4992-ab3c-2c4ca31d8726",
-        "stars": 5,
-        "author": "Paul Maguire",
-        "text": "\tInformative, nice layout, no fees, trading made simple!",
-        "createdAt": "2026-03-21T14:51:40.000Z",
-        "replied": false
       }
     ],
     "stats": {
-      "fetchedCount": 81,
-      "avgRating": "3.84"
+      "fetchedCount": 80,
+      "avgRating": "3.83"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T14:50:36.644Z",
+    "updatedAt": "2026-03-28T15:05:41.882Z",
     "stats": {
       "rating": 4.67854,
       "ratingCount": 346173,
