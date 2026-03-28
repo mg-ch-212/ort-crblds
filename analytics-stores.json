@@ -1,8 +1,16 @@
 {
-  "updatedAt": "2026-03-28T00:20:37.541Z",
+  "updatedAt": "2026-03-28T00:35:36.611Z",
   "googlePlay": {
-    "updatedAt": "2026-03-28T00:20:36.442Z",
+    "updatedAt": "2026-03-28T00:35:35.803Z",
     "recentReviews": [
+      {
+        "id": "a57fbd91-fa8d-4720-819c-a283c6eae4fb",
+        "stars": 5,
+        "author": "Evans Okyere",
+        "text": "\tpretty good .",
+        "createdAt": "2026-03-28T00:34:04.000Z",
+        "replied": false
+      },
       {
         "id": "5299ddeb-1c73-463d-b70d-6183c059ced1",
         "stars": 1,
@@ -645,15 +653,15 @@
       }
     ],
     "stats": {
-      "fetchedCount": 80,
-      "avgRating": "3.83"
+      "fetchedCount": 81,
+      "avgRating": "3.84"
     }
   },
   "appStore": {
-    "updatedAt": "2026-03-28T00:20:37.541Z",
+    "updatedAt": "2026-03-28T00:35:36.611Z",
     "stats": {
-      "rating": 4.67845,
-      "ratingCount": 345955,
+      "rating": 4.67849,
+      "ratingCount": 346011,
       "version": "8.23.0"
     },
     "recentReviews": [
